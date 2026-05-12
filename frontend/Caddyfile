@@ -1,0 +1,23 @@
+:80 {
+    root * /srv
+    encode gzip
+
+    # 1. Przekieruj API do backendu
+    handle /api/* {
+        uri strip_prefix /api
+        reverse_proxy lapland_backend:8000
+    }
+
+    # 2. Przekieruj Healthcheck do backendu
+    handle /health {
+        reverse_proxy lapland_backend:8000
+    }
+
+    # 3. Obsługa frontendu i routingu (Single Page App)
+    handle {
+        try_files {path} /index.html
+        file_server
+    }
+
+    log
+}
