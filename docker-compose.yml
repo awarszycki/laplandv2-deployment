@@ -2,14 +2,17 @@ services:
   lapland_backend:
     build: ./backend
     container_name: lapland_backend
-    # Dodajemy szerokie uprawnienia, by Python 3.12 mógł tworzyć sockety
     privileged: true
     security_opt:
       - seccomp:unconfined
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://user:password@db:5432/lapland
+      - DB_HOST=lapland_db
+      - DB_PORT=3306
+      - DB_USER=lapland
+      - DB_PASSWORD=lapland_pass
+      - DB_NAME=lapland
     depends_on:
       - db
 
@@ -22,14 +25,18 @@ services:
       - lapland_backend
 
   db:
-    image: postgres:15
+    image: mariadb:11
     container_name: lapland_db
+    restart: always
     environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=lapland
+      - MYSQL_ROOT_PASSWORD=rootpass
+      - MYSQL_DATABASE=lapland
+      - MYSQL_USER=lapland
+      - MYSQL_PASSWORD=lapland_pass
+    ports:
+      - "3306:3306"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mariadb_data:/var/lib/mysql
 
 volumes:
-  postgres_data:
+  mariadb_data:
