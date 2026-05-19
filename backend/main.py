@@ -1,210 +1,140 @@
-from fastapi import FastAPI, HTTPException, Depends
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, HTTPException, Depends, Query
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import List, Optional
 import aiomysql
 import os
-import json
 
-app = FastAPI(title="Lapland 2026 API")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app = FastAPI(title="Lapland v2 API")
 
 DB_CONFIG = {
-    "host": os.getenv("DB_HOST", "lapland_db"),
-    "port": int(os.getenv("DB_PORT", 3306)),
-    "user": os.getenv("DB_USER", "lapland"),
-    "password": os.getenv("DB_PASSWORD", "lapland_pass"),
-    "db": os.getenv("DB_NAME", "lapland"),
-    "autocommit": True,
+    "host": "lapland_db",
+    "port": 3306,
+    "user": os.getenv("MARIADB_USER", "root"),
+    "password": os.getenv("MARIADB_PASSWORD", "secret"),
+    "db": os.getenv("MARIADB_DATABASE", "lapland"),
+    "autocommit": True
 }
 
-async def get_db():
-    conn = await aiomysql.connect(**DB_CONFIG)
-    try:
-        yield conn
-    finally:
-        conn.close()
+async def get_db_pool():
+    if not hasattr(app, "db_pool"):
+        app.db_pool = await aiomysql.create_pool(**DB_CONFIG)
+    return app.db_pool
 
-# ─── MODELS ───────────────────────────────────────────────────────────────────
+@app.on_event("shutdown")
+async def shutdown_event():
+    if hasattr(app, "db_pool"):
+        app.db_pool.close()
+        await app.db_pool.wait_closed()
 
-class Member(BaseModel):
-    id: Optional[int] = None
+# --- MODELE PYDANTIC ---
+class ProjectBase(BaseModel):
     name: str
+    description: Optional[str] = None
 
-class Expense(BaseModel):
-    id: Optional[int] = None
-    title: str
+class ProjectCreate(ProjectBase):
+    pass
+
+class Project(ProjectBase):
+    id: int
+
+class MemberBase(BaseModel):
+    name: str
+    project_id: int
+
+class MemberCreate(MemberBase):
+    pass
+
+class Member(MemberBase):
+    id: int
+
+class ExpenseBase(BaseModel):
+    description: str
     amount: float
-    original_amount: float
-    currency: str
-    payer_id: int
-    split_ids: List[int]
-    date: Optional[str] = None
+    paid_by_id: int
+    project_id: int
 
-class GearItem(BaseModel):
-    id: Optional[int] = None
-    member_id: int
-    category: str
-    name: str
-    packed: bool = False
+class ExpenseCreate(ExpenseBase):
+    pass
 
-class SharedGearItem(BaseModel):
-    id: Optional[int] = None
-    name: str
-    taken_by: Optional[int] = None
-    packed: bool = False
+class Expense(ExpenseBase):
+    id: int
 
-class SharedGearUpdate(BaseModel):
-    taken_by: Optional[int] = None
-    packed: Optional[bool] = None
+# --- ENDPOINTY: PROJEKTY ---
+@app.get("/api/projects", response_model=List[Project])
+async def get_projects(pool = Depends(get_db_pool)):
+    async with pool.acquire() as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute("SELECT id, name, description FROM projects")
+            return await cur.fetchall()
 
-# ─── MEMBERS ──────────────────────────────────────────────────────────────────
+@app.post("/api/projects", response_model=Project)
+async def create_project(project: ProjectCreate, pool = Depends(get_db_pool)):
+    async with pool.acquire() as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute(
+                "INSERT INTO projects (name, description) VALUES (%s, %s)",
+                (project.name, project.description)
+            )
+            return {**project.model_dump(), "id": cur.lastrowid}
 
-@app.get("/members")
-async def get_members(conn=Depends(get_db)):
-    async with conn.cursor(aiomysql.DictCursor) as cur:
-        await cur.execute("SELECT * FROM members ORDER BY id")
-        return await cur.fetchall()
+# --- ENDPOINTY: CZŁONKOWIE ---
+@app.get("/api/members", response_model=List[Member])
+async def get_members(project_id: int = Query(...), pool = Depends(get_db_pool)):
+    async with pool.acquire() as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute("SELECT id, name, project_id FROM members WHERE project_id = %s", (project_id,))
+            return await cur.fetchall()
 
-@app.post("/members", status_code=201)
-async def add_member(member: Member, conn=Depends(get_db)):
-    async with conn.cursor() as cur:
-        await cur.execute("INSERT INTO members (name) VALUES (%s)", (member.name,))
-        member_id = cur.lastrowid
-    async with conn.cursor(aiomysql.DictCursor) as cur:
-        await cur.execute("SELECT * FROM members WHERE id = %s", (member_id,))
-        return await cur.fetchone()
+@app.post("/api/members", response_model=Member)
+async def create_member(member: MemberCreate, pool = Depends(get_db_pool)):
+    async with pool.acquire() as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute(
+                "INSERT INTO members (name, project_id) VALUES (%s, %s)",
+                (member.name, member.project_id)
+            )
+            return {**member.model_dump(), "id": cur.lastrowid}
 
-@app.put("/members/{member_id}")
-async def update_member(member_id: int, member: Member, conn=Depends(get_db)):
-    async with conn.cursor() as cur:
-        await cur.execute("UPDATE members SET name = %s WHERE id = %s", (member.name, member_id))
-    async with conn.cursor(aiomysql.DictCursor) as cur:
-        await cur.execute("SELECT * FROM members WHERE id = %s", (member_id,))
-        return await cur.fetchone()
+# --- ENDPOINTY: WYDATKI ---
+@app.get("/api/expenses", response_model=List[Expense])
+async def get_expenses(project_id: int = Query(...), pool = Depends(get_db_pool)):
+    async with pool.acquire() as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute("SELECT id, description, amount, paid_by_id, project_id FROM expenses WHERE project_id = %s", (project_id,))
+            return await cur.fetchall()
 
-@app.delete("/members/{member_id}")
-async def delete_member(member_id: int, conn=Depends(get_db)):
-    async with conn.cursor() as cur:
-        await cur.execute(
-            "SELECT COUNT(*) as cnt FROM expenses WHERE payer_id = %s OR JSON_CONTAINS(split_ids, %s)",
-            (member_id, str(member_id))
-        )
-        row = await cur.fetchone()
-        if row[0] > 0:
-            raise HTTPException(400, "Nie można usunąć — uczestnik ma przypisane wydatki")
-        await cur.execute("DELETE FROM gear_items WHERE member_id = %s", (member_id,))
-        await cur.execute("UPDATE shared_gear SET taken_by = NULL WHERE taken_by = %s", (member_id,))
-        await cur.execute("DELETE FROM members WHERE id = %s", (member_id,))
-    return {"ok": True}
+@app.post("/api/expenses", response_model=Expense)
+async def create_expense(expense: ExpenseCreate, pool = Depends(get_db_pool)):
+    async with pool.acquire() as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute(
+                "INSERT INTO expenses (description, amount, paid_by_id, project_id) VALUES (%s, %s, %s, %s)",
+                (expense.description, expense.amount, expense.paid_by_id, expense.project_id)
+            )
+            return {**expense.model_dump(), "id": cur.lastrowid}
 
-# ─── EXPENSES ─────────────────────────────────────────────────────────────────
+@app.put("/api/expenses/{expense_id}", response_model=Expense)
+async def update_expense(expense_id: int, expense: ExpenseCreate, pool = Depends(get_db_pool)):
+    async with pool.acquire() as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute(
+                "UPDATE expenses SET description=%s, amount=%s, paid_by_id=%s WHERE id=%s AND project_id=%s",
+                (expense.description, expense.amount, expense.paid_by_id, expense_id, expense.project_id)
+            )
+            if cur.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Wydatek nie znaleziony lub nie należy do tego projektu")
+            return {**expense.model_dump(), "id": expense_id}
 
-@app.get("/expenses")
-async def get_expenses(conn=Depends(get_db)):
-    async with conn.cursor(aiomysql.DictCursor) as cur:
-        await cur.execute("SELECT * FROM expenses ORDER BY id DESC")
-        rows = await cur.fetchall()
-        for r in rows:
-            r["split_ids"] = json.loads(r["split_ids"])
-        return rows
+@app.delete("/api/expenses/{expense_id}")
+async def delete_expense(expense_id: int, pool = Depends(get_db_pool)):
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("DELETE FROM expenses WHERE id = %s", (expense_id,))
+            if cur.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Wydatek nie istnieje")
+            return {"status": "success", "message": "Wydatek usunięty"}
 
-@app.post("/expenses", status_code=201)
-async def add_expense(expense: Expense, conn=Depends(get_db)):
-    from datetime import date
-    today = date.today().strftime("%d.%m.%Y")
-    async with conn.cursor() as cur:
-        await cur.execute(
-            "INSERT INTO expenses (title, amount, original_amount, currency, payer_id, split_ids, date) VALUES (%s,%s,%s,%s,%s,%s,%s)",
-            (expense.title, expense.amount, expense.original_amount, expense.currency,
-             expense.payer_id, json.dumps(expense.split_ids), today)
-        )
-        exp_id = cur.lastrowid
-    async with conn.cursor(aiomysql.DictCursor) as cur:
-        await cur.execute("SELECT * FROM expenses WHERE id = %s", (exp_id,))
-        row = await cur.fetchone()
-        row["split_ids"] = json.loads(row["split_ids"])
-        return row
-
-@app.delete("/expenses/{expense_id}")
-async def delete_expense(expense_id: int, conn=Depends(get_db)):
-    async with conn.cursor() as cur:
-        await cur.execute("DELETE FROM expenses WHERE id = %s", (expense_id,))
-    return {"ok": True}
-
-# ─── GEAR ITEMS ───────────────────────────────────────────────────────────────
-
-@app.get("/gear")
-async def get_gear(conn=Depends(get_db)):
-    async with conn.cursor(aiomysql.DictCursor) as cur:
-        await cur.execute("SELECT * FROM gear_items ORDER BY id")
-        return await cur.fetchall()
-
-@app.post("/gear", status_code=201)
-async def add_gear(item: GearItem, conn=Depends(get_db)):
-    async with conn.cursor() as cur:
-        await cur.execute(
-            "INSERT INTO gear_items (member_id, category, name, packed) VALUES (%s,%s,%s,%s)",
-            (item.member_id, item.category, item.name, item.packed)
-        )
-        item_id = cur.lastrowid
-    async with conn.cursor(aiomysql.DictCursor) as cur:
-        await cur.execute("SELECT * FROM gear_items WHERE id = %s", (item_id,))
-        return await cur.fetchone()
-
-@app.put("/gear/{item_id}/packed")
-async def toggle_gear_packed(item_id: int, body: dict, conn=Depends(get_db)):
-    async with conn.cursor() as cur:
-        await cur.execute("UPDATE gear_items SET packed = %s WHERE id = %s", (body["packed"], item_id))
-    return {"ok": True}
-
-@app.delete("/gear/{item_id}")
-async def delete_gear(item_id: int, conn=Depends(get_db)):
-    async with conn.cursor() as cur:
-        await cur.execute("DELETE FROM gear_items WHERE id = %s", (item_id,))
-    return {"ok": True}
-
-# ─── SHARED GEAR ──────────────────────────────────────────────────────────────
-
-@app.get("/shared-gear")
-async def get_shared_gear(conn=Depends(get_db)):
-    async with conn.cursor(aiomysql.DictCursor) as cur:
-        await cur.execute("SELECT * FROM shared_gear ORDER BY id")
-        return await cur.fetchall()
-
-@app.post("/shared-gear", status_code=201)
-async def add_shared_gear(item: SharedGearItem, conn=Depends(get_db)):
-    async with conn.cursor() as cur:
-        await cur.execute(
-            "INSERT INTO shared_gear (name, taken_by, packed) VALUES (%s,%s,%s)",
-            (item.name, item.taken_by, item.packed)
-        )
-        item_id = cur.lastrowid
-    async with conn.cursor(aiomysql.DictCursor) as cur:
-        await cur.execute("SELECT * FROM shared_gear WHERE id = %s", (item_id,))
-        return await cur.fetchone()
-
-@app.patch("/shared-gear/{item_id}")
-async def update_shared_gear(item_id: int, body: SharedGearUpdate, conn=Depends(get_db)):
-    async with conn.cursor() as cur:
-        if body.taken_by is not None or body.taken_by == 0:
-            await cur.execute("UPDATE shared_gear SET taken_by = %s WHERE id = %s", (body.taken_by or None, item_id))
-        if body.packed is not None:
-            await cur.execute("UPDATE shared_gear SET packed = %s WHERE id = %s", (body.packed, item_id))
-    return {"ok": True}
-
-@app.delete("/shared-gear/{item_id}")
-async def delete_shared_gear(item_id: int, conn=Depends(get_db)):
-    async with conn.cursor() as cur:
-        await cur.execute("DELETE FROM shared_gear WHERE id = %s", (item_id,))
-    return {"ok": True}
-
+# --- HEALTH CHECK ---
 @app.get("/health")
-async def health():
-    return {"status": "ok"}
+async def health_check():
+    return {"status": "healthy"}

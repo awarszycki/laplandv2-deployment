@@ -1,48 +1,70 @@
+-- Tworzenie bazy danych (jeśli nie istnieje)
 CREATE DATABASE IF NOT EXISTS lapland CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE lapland;
 
+-- 1. TABELA PROJEKTÓW (WYPRAW)
+CREATE TABLE IF NOT EXISTS projects (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Wstawienie domyślnego projektu, aby zachować wsteczną kompatybilność danych
+INSERT INTO projects (id, name, description) 
+VALUES (1, 'Laponia 2026', 'Główna wyprawa zimowa na północ')
+ON DUPLICATE KEY UPDATE id=id;
+
+-- 2. TABELA UCZESTNIKÓW
 CREATE TABLE IF NOT EXISTS members (
-  id   INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(100) NOT NULL
-);
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    project_id INT NOT NULL DEFAULT 1,
+    CONSTRAINT fk_members_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- 3. TABELA WYDATKÓW
 CREATE TABLE IF NOT EXISTS expenses (
-  id              INT AUTO_INCREMENT PRIMARY KEY,
-  title           VARCHAR(200) NOT NULL,
-  amount          DECIMAL(10,2) NOT NULL,
-  original_amount DECIMAL(10,2) NOT NULL,
-  currency        VARCHAR(10) NOT NULL DEFAULT 'PLN',
-  payer_id        INT NOT NULL,
-  split_ids       JSON NOT NULL,
-  date            VARCHAR(20)
-);
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    description VARCHAR(255) NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    paid_by_id INT NOT NULL,
+    project_id INT NOT NULL DEFAULT 1,
+    CONSTRAINT fk_expenses_paid_by FOREIGN KEY (paid_by_id) REFERENCES members(id) ON DELETE CASCADE,
+    CONSTRAINT fk_expenses_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- 4. TABELA EKWIPUNKU INDYWIDUALNEGO
 CREATE TABLE IF NOT EXISTS gear_items (
-  id        INT AUTO_INCREMENT PRIMARY KEY,
-  member_id INT NOT NULL,
-  category  VARCHAR(50) NOT NULL,
-  name      VARCHAR(200) NOT NULL,
-  packed    TINYINT(1) NOT NULL DEFAULT 0
-);
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    weight_g INT NOT NULL DEFAULT 0,
+    packed BOOLEAN NOT NULL DEFAULT FALSE,
+    member_id INT NOT NULL,
+    project_id INT NOT NULL DEFAULT 1,
+    CONSTRAINT fk_gear_member FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE,
+    CONSTRAINT fk_gear_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- 5. TABELA EKWIPUNKU WSPÓLNEGO
 CREATE TABLE IF NOT EXISTS shared_gear (
-  id       INT AUTO_INCREMENT PRIMARY KEY,
-  name     VARCHAR(200) NOT NULL,
-  taken_by INT DEFAULT NULL,
-  packed   TINYINT(1) NOT NULL DEFAULT 0
-);
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    weight_g INT NOT NULL DEFAULT 0,
+    assigned_member_id INT DEFAULT NULL,
+    packed BOOLEAN NOT NULL DEFAULT FALSE,
+    project_id INT NOT NULL DEFAULT 1,
+    CONSTRAINT fk_shared_gear_member FOREIGN KEY (assigned_member_id) REFERENCES members(id) ON DELETE SET NULL,
+    CONSTRAINT fk_shared_gear_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Default members
-INSERT IGNORE INTO members (id, name) VALUES
-  (1, 'Ania'),
-  (2, 'Marek'),
-  (3, 'Kasia'),
-  (4, 'Piotr');
+-- Przykładowe dane startowe przypisane do projektu o ID 1
+INSERT INTO members (id, name, project_id) VALUES 
+(1, 'Ania', 1),
+(2, 'Bartek', 1)
+ON DUPLICATE KEY UPDATE id=id;
 
--- Default shared gear
-INSERT IGNORE INTO shared_gear (id, name) VALUES
-  (1, 'Apteczka grupowa'),
-  (2, 'Powerbank 20000mAh'),
-  (3, 'Namiot 4-osobowy'),
-  (4, 'Zestaw garnków'),
-  (5, 'Latarki (2 szt.)');
+INSERT INTO expenses (id, description, amount, paid_by_id, project_id) VALUES 
+(1, 'Paliwo', 450.00, 1, 1),
+(2, 'Nocleg', 1200.00, 2, 1)
+ON DUPLICATE KEY UPDATE id=id;
