@@ -2,9 +2,8 @@
     root * /srv
     encode gzip
 
-    # 1. Przekieruj API do backendu
+    # 1. Przekieruj API do backendu (zachowaj /api prefix)
     handle /api/* {
-        uri strip_prefix /api
         reverse_proxy lapland_backend:8000
     }
 
