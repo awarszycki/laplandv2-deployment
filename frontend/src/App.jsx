@@ -19,13 +19,13 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-zinc-900 font-sans antialiased">
+    <>
       {currentProject ? (
         <Dashboard project={currentProject} onBack={handleLeave} />
       ) : (
         <ProjectSelector onSelectProject={handleSelect} />
       )}
-    </div>
+    </>
   );
 }
 

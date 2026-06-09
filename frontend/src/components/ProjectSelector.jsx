@@ -1,92 +1,131 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
+
+const COLORS = ["#00c896","#f0a500","#4ca0e0","#e05555","#a78bfa","#fb923c","#34d399","#60a5fa"];
+function projColor(id) { return COLORS[(id - 1) % COLORS.length]; }
+function projInitials(name) { return name.slice(0, 2).toUpperCase(); }
 
 export default function ProjectSelector({ onSelectProject }) {
-  const [projects, setProjects] = useState([]);
-  const [name, setName] = useState('');
-  const [desc, setDesc] = useState('');
+  const [projects, setProjects]   = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [name, setName]           = useState("");
+  const [desc, setDesc]           = useState("");
+  const [creating, setCreating]   = useState(false);
+  const [showForm, setShowForm]   = useState(false);
 
   useEffect(() => {
-    fetch('/api/projects')
-      .then(res => res.json())
-      .then(data => setProjects(data))
-      .catch(err => console.error("Błąd pobierania projektów:", err));
+    fetch("/api/projects")
+      .then(r => r.json())
+      .then(data => { setProjects(data); setLoading(false); })
+      .catch(() => setLoading(false));
   }, []);
 
-  const handleCreate = (e) => {
-    e.preventDefault();
+  async function handleCreate() {
     if (!name.trim()) return;
+    setCreating(true);
+    const res  = await fetch("/api/projects", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: name.trim(), description: desc.trim() || null }),
+    });
+    const proj = await res.json();
+    setCreating(false);
+    onSelectProject(proj);
+  }
 
-    fetch('/api/projects', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, description: desc })
-    })
-    .then(res => res.json())
-    .then(newProj => {
-      setProjects([...projects, newProj]);
-      onSelectProject(newProj);
-    })
-    .catch(err => console.error("Błąd tworzenia projektu:", err));
-  };
+  if (loading) {
+    return (
+      <div className="loading-screen">
+        <div className="spinner" />
+        <span>Ładowanie wypraw…</span>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-16">
-      <header className="text-center mb-12">
-        <h1 className="text-4xl font-extrabold tracking-tight text-teal-950 mb-2">Nordic Planner</h1>
-        <p className="text-zinc-500">Wybierz wyprawę lub utwórz nowy projekt podróży</p>
-      </header>
+    <div className="login-screen">
+      <div className="login-logo">🧭</div>
+      <div className="login-title">Nordic Planner</div>
+      <div className="login-sub">Wybierz wyprawę lub utwórz nową</div>
 
-      <div className="grid md:grid-cols-2 gap-8">
-        {/* Lista Projektów */}
-        <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm">
-          <h2 className="text-xl font-bold mb-4 text-zinc-800">Twoje Wyprawy</h2>
-          <div className="space-y-3">
-            {projects.length === 0 ? (
-              <p className="text-zinc-400 text-sm">Brak zdefiniowanych wypraw. Utwórz pierwszą!</p>
-            ) : (
-              projects.map(p => (
-                <button 
-                  key={p.id} 
-                  onClick={() => onSelectProject(p)} 
-                  className="w-full text-left p-4 rounded-xl border border-zinc-200 hover:border-teal-600 hover:bg-teal-50/40 transition-all group"
+      <div style={{ width: "100%", maxWidth: "480px", display: "flex", flexDirection: "column", gap: "16px" }}>
+
+        {projects.length > 0 && (
+          <div className="login-card">
+            <span className="login-label">Twoje wyprawy</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {projects.map(p => (
+                <button
+                  key={p.id}
+                  className="login-member-btn"
+                  style={{ justifyContent: "flex-start" }}
+                  onClick={() => onSelectProject(p)}
                 >
-                  <div className="font-semibold text-zinc-900 group-hover:text-teal-950">{p.name}</div>
-                  {p.description && <div className="text-sm text-zinc-500 mt-1">{p.description}</div>}
+                  <div className="av" style={{ background: projColor(p.id) }}>
+                    {projInitials(p.name)}
+                  </div>
+                  <div style={{ textAlign: "left" }}>
+                    <div style={{ fontWeight: 600, color: "var(--snow)", fontSize: "14px" }}>{p.name}</div>
+                    {p.description && (
+                      <div style={{ fontSize: "12px", color: "var(--snow-faint)", marginTop: "1px" }}>
+                        {p.description}
+                      </div>
+                    )}
+                  </div>
                 </button>
-              ))
-            )}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Formularz Nowego Projektu */}
-        <div className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-smh-fit">
-          <h2 className="text-xl font-bold mb-4 text-zinc-800">Nowa Przygoda</h2>
-          <form onSubmit={handleCreate} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1">Nazwa wyjazdu</label>
-              <input 
-                className="w-full p-3 rounded-xl border border-zinc-300 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:bg-white transition-all" 
-                type="text" 
-                placeholder="np. Laponia Winter 2026" 
-                value={name} 
-                onChange={e => setName(e.target.value)} 
-                required 
+        {!showForm ? (
+          <button
+            className="btn btn-primary"
+            style={{ width: "100%", justifyContent: "center", padding: "13px" }}
+            onClick={() => setShowForm(true)}
+          >
+            + Nowa wyprawa
+          </button>
+        ) : (
+          <div className="login-card">
+            <span className="login-label">Nowa wyprawa</span>
+            <div className="form-group">
+              <label className="form-label">Nazwa</label>
+              <input
+                type="text"
+                placeholder="np. Laponia Winter 2026"
+                value={name}
+                autoFocus
+                onChange={e => setName(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && handleCreate()}
               />
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1">Opis / Notatki</label>
-              <textarea 
-                className="w-full p-3 rounded-xl border border-zinc-300 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:bg-white transition-all h-24 resize-none" 
-                placeholder="Krótki cel wyprawy, ramy czasowe..." 
-                value={desc} 
-                onChange={e => setDesc(e.target.value)} 
+            <div className="form-group">
+              <label className="form-label">Opis (opcjonalnie)</label>
+              <input
+                type="text"
+                placeholder="Krótki opis, cel, daty…"
+                value={desc}
+                onChange={e => setDesc(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && handleCreate()}
               />
             </div>
-            <button className="w-full bg-teal-800 hover:bg-teal-900 text-white font-medium py-3 rounded-xl shadow-sm transition-all text-sm">
-              Utwórz i przejdź do projektu
-            </button>
-          </form>
-        </div>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button className="btn btn-primary" style={{ flex: 1, justifyContent: "center" }}
+                onClick={handleCreate} disabled={creating}>
+                {creating ? "Tworzę…" : "Utwórz i wejdź"}
+              </button>
+              <button className="btn btn-outline" onClick={() => { setShowForm(false); setName(""); setDesc(""); }}>
+                Anuluj
+              </button>
+            </div>
+          </div>
+        )}
+
+        {projects.length === 0 && !showForm && (
+          <div style={{ textAlign: "center", color: "var(--snow-faint)", fontSize: "13px" }}>
+            Nie masz jeszcze żadnych wypraw
+          </div>
+        )}
       </div>
     </div>
   );
