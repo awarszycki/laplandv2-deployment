@@ -12,7 +12,12 @@
         reverse_proxy lapland_backend:8000
     }
 
-    # 3. Obsługa frontendu i routingu (Single Page App)
+    # 3. Pliki statyczne (JS, CSS, assets)
+    handle /assets/* {
+        file_server
+    }
+
+    # 4. SPA routing — wszystko inne → index.html
     handle {
         try_files {path} /index.html
         file_server
