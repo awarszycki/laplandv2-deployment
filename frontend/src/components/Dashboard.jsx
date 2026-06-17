@@ -3,15 +3,32 @@ import Ekipa      from "./Ekipa";
 import Finanse    from "./Finanse";
 import Ekwipunek  from "./Ekwipunek";
 
+// Nowoczesne ikony SVG
+const ICONS = {
+  ekipa: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+    </svg>
+  ),
+  finanse: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  ),
+  ekwipunek: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+    </svg>
+  )
+};
+
 const TABS = [
-  { id: "ekipa",     label: "Ekipa",      icon: "⚔️" },
-  { id: "finanse",   label: "Finanse",    icon: "💸" },
-  { id: "ekwipunek", label: "Ekwipunek",  icon: "🎒" },
+  { id: "ekipa",     label: "Ekipa",      icon: ICONS.ekipa },
+  { id: "finanse",   label: "Finanse",    icon: ICONS.finanse },
+  { id: "ekwipunek", label: "Ekwipunek",  icon: ICONS.ekwipunek },
 ];
 
-// ── helpers ──────────────────────────────────────────────────────────
 function gearByMemberAndCategory(rawItems) {
-  // rawItems: [{id, name, category, packed, member_id}]
   const out = {};
   rawItems.forEach(item => {
     if (!out[item.member_id]) out[item.member_id] = {};
@@ -25,11 +42,25 @@ export default function Dashboard({ project, onBack }) {
   const [tab, setTab]             = useState("ekipa");
   const [members, setMembers]     = useState([]);
   const [expenses, setExpenses]   = useState([]);
-  const [gearItems, setGearItems] = useState([]);   // personal gear flat list
-  const [sharedGear, setSharedGear] = useState([]); // shared gear flat list
+  const [gearItems, setGearItems] = useState([]);   
+  const [sharedGear, setSharedGear] = useState([]); 
   const [loading, setLoading]     = useState(true);
 
-  // ── initial load ──────────────────────────────────────────────────
+  // Bezpieczna normalizacja wydatków (usuwa błąd splitIds is undefined)
+  const normalizeExpenses = useCallback((rawExpenses) => {
+    return rawExpenses.map(e => ({
+      ...e,
+      id: e.id,
+      title: e.title ?? e.description ?? "Wydatek",
+      amount: parseFloat(e.amount || 0),
+      original_amount: parseFloat(e.original_amount ?? e.amount ?? 0),
+      currency: e.currency || "PLN",
+      payerId: e.payer_id ?? e.paid_by_id,
+      splitIds: e.split_ids ?? e.splitIds ?? [],
+      date: e.date || ""
+    }));
+  }, []);
+
   useEffect(() => {
     setLoading(true);
     const pid = project.id;
@@ -40,12 +71,15 @@ export default function Dashboard({ project, onBack }) {
       fetch(`/api/shared_gear?project_id=${pid}`).then(r => r.json()).catch(() => []),
     ]).then(([m, e, g, sg]) => {
       setMembers(m);
-      setExpenses(e);
+      setExpenses(normalizeExpenses(e));
       setGearItems(g);
       setSharedGear(sg);
       setLoading(false);
+    }).catch(err => {
+      console.error(err);
+      setLoading(false);
     });
-  }, [project.id]);
+  }, [project.id, normalizeExpenses]);
 
   // ── members ───────────────────────────────────────────────────────
   const handleAddMember = useCallback(async (name) => {
@@ -72,7 +106,7 @@ export default function Dashboard({ project, onBack }) {
     setMembers(prev => prev.filter(m => m.id !== id));
   }, []);
 
-  // ── expenses ──────────────────────────────────────────────────────
+  // ── expenses (Z dodaną obsługą aktualizacji) ──────────────────────
   const handleAddExpense = useCallback(async (data) => {
     const res = await fetch("/api/expenses", {
       method: "POST",
@@ -88,16 +122,26 @@ export default function Dashboard({ project, onBack }) {
       }),
     });
     const e = await res.json();
-    // normalise to shape Finanse.jsx expects
-    setExpenses(prev => [...prev, {
-      ...e,
-      title: e.title ?? e.description,
-      payer_id: e.payer_id ?? e.paid_by_id,
-      splitIds: e.split_ids ?? data.splitIds,
-      currency: e.currency ?? data.currency ?? "PLN",
-      original_amount: e.original_amount ?? data.originalAmount,
-    }]);
-  }, [project.id]);
+    setExpenses(prev => normalizeExpenses([...prev, e]));
+  }, [project.id, normalizeExpenses]);
+
+  const handleUpdateExpense = useCallback(async (id, data) => {
+    const res = await fetch(`/api/expenses/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        description: data.title,
+        amount: data.amount,
+        paid_by_id: data.payerId,
+        project_id: project.id,
+        split_ids: data.splitIds,
+        currency: data.currency,
+        original_amount: data.originalAmount,
+      }),
+    });
+    const updated = await res.json();
+    setExpenses(prev => prev.map(e => e.id === id ? normalizeExpenses([updated])[0] : e));
+  }, [project.id, normalizeExpenses]);
 
   const handleDeleteExpense = useCallback(async (id) => {
     await fetch(`/api/expenses/${id}`, { method: "DELETE" });
@@ -155,10 +199,8 @@ export default function Dashboard({ project, onBack }) {
     setSharedGear(prev => prev.filter(i => i.id !== itemId));
   }, []);
 
-  // ── derived ───────────────────────────────────────────────────────
   const myGear = gearByMemberAndCategory(gearItems);
 
-  // ── render ────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="loading-screen">
@@ -170,41 +212,38 @@ export default function Dashboard({ project, onBack }) {
 
   return (
     <div className="app">
-      {/* Header */}
+      {/* Dodane estetyczne zdjęcie w tle projektu z lekkim przyciemnieniem */}
+      <div className="app-bg-overlay" style={{ backgroundImage: "url('/image_44d1c1.jpg')" }} />
+
       <header className="app-header">
         <div className="header-inner">
-          <div className="header-brand" style={{ cursor: "pointer" }} onClick={onBack}>
-            <div className="brand-icon">🧭</div>
+          <div className="header-brand" onClick={onBack}>
+            <div className="brand-icon">
+              <svg className="w-6 h-6 text-aurora" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+              </svg>
+            </div>
             <div className="brand-text">
               <h1>{project.name}</h1>
               {project.description && <span className="subtitle">{project.description}</span>}
             </div>
           </div>
 
-          <nav className="tab-nav">
+          <nav className="tab-nav desktop-only">
             {TABS.map(t => (
-              <button
-                key={t.id}
-                className={`tab-btn ${tab === t.id ? "active" : ""}`}
-                onClick={() => setTab(t.id)}
-              >
+              <button key={t.id} className={`tab-btn ${tab === t.id ? "active" : ""}`} onClick={() => setTab(t.id)}>
                 <span className="tab-icon">{t.icon}</span>
                 <span>{t.label}</span>
               </button>
             ))}
           </nav>
 
-          <button
-            className="btn btn-outline btn-sm"
-            onClick={onBack}
-            title="Wróć do listy wypraw"
-          >
+          <button className="btn btn-outline btn-sm back-to-trips-btn" onClick={onBack}>
             ← Wyprawy
           </button>
         </div>
       </header>
 
-      {/* Content */}
       <main className="app-main">
         {tab === "ekipa" && (
           <Ekipa
@@ -223,6 +262,7 @@ export default function Dashboard({ project, onBack }) {
             expenses={expenses}
             currentUser={null}
             onAddExpense={handleAddExpense}
+            onUpdateExpense={handleUpdateExpense}
             onDeleteExpense={handleDeleteExpense}
           />
         )}
@@ -241,6 +281,16 @@ export default function Dashboard({ project, onBack }) {
           />
         )}
       </main>
+
+      {/* Responsywny pasek dolny dla urządzeń mobilnych zapobiegający nakładaniu */}
+      <nav className="mobile-bottom-nav">
+        {TABS.map(t => (
+          <button key={t.id} className={`mobile-nav-btn ${tab === t.id ? "active" : ""}`} onClick={() => setTab(t.id)}>
+            <span className="mobile-nav-icon">{t.icon}</span>
+            <span className="mobile-nav-label">{t.label}</span>
+          </button>
+        ))}
+      </nav>
     </div>
   );
 }

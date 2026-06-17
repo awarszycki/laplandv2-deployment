@@ -1,11 +1,12 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 const EUR_TO_PLN = 4.35;
 const COLORS = ["#00c896","#f0a500","#4ca0e0","#e05555","#a78bfa","#fb923c","#34d399","#60a5fa"];
 function getAvatarColor(id) { return COLORS[(id - 1) % COLORS.length]; }
 function initials(name) { return name.slice(0, 2).toUpperCase(); }
 
-export default function Finanse({ members, expenses, currentUser, onAddExpense, onDeleteExpense }) {
+export default function Finanse({ members, expenses, currentUser, onAddExpense, onUpdateExpense, onDeleteExpense }) {
+  const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({
     title: "",
     amount: "",
@@ -15,6 +16,13 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
   });
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Aktualizacja domyślnego płatnika w formularzu, gdy załadują się członkowie
+  useEffect(() => {
+    if (members.length > 0 && !form.payerId) {
+      setForm(f => ({ ...f, payerId: members[0].id, splitIds: members.map(m => m.id) }));
+    }
+  }, [members, form.payerId]);
 
   const amountPLN = form.currency === "EUR"
     ? (parseFloat(form.amount) || 0) * EUR_TO_PLN
@@ -29,18 +37,58 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
     }));
   }
 
-  async function addExpense() {
+  function startEdit(e) {
+    setEditingId(e.id);
+    setForm({
+      title: e.title,
+      amount: e.original_amount ?? e.amount,
+      currency: e.currency || "PLN",
+      payerId: e.payerId,
+      splitIds: e.splitIds && e.splitIds.length > 0 ? e.splitIds : members.map(m => m.id),
+    });
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setForm({
+      title: "",
+      amount: "",
+      currency: "PLN",
+      payerId: currentUser?.id || members[0]?.id || null,
+      splitIds: members.map(m => m.id),
+    });
+    setShowForm(false);
+  }
+
+  async function saveExpense() {
     if (!form.title.trim() || !form.amount || form.splitIds.length === 0) return;
     setSaving(true);
-    await onAddExpense({
+    
+    const expenseData = {
       title: form.title.trim(),
       amount: amountPLN,
       originalAmount: parseFloat(form.amount),
       currency: form.currency,
-      payerId: form.payerId,
-      splitIds: form.splitIds,
+      payerId: parseInt(form.payerId),
+      splitIds: form.splitIds.map(id => parseInt(id)),
+    };
+
+    if (editingId) {
+      await onUpdateExpense(editingId, expenseData);
+    } else {
+      await onAddExpense(expenseData);
+    }
+
+    setEditingId(null);
+    setForm({
+      title: "",
+      amount: "",
+      currency: "PLN",
+      payerId: currentUser?.id || members[0]?.id || null,
+      splitIds: members.map(m => m.id),
     });
-    setForm(f => ({ ...f, title: "", amount: "", currency: "PLN" }));
     setShowForm(false);
     setSaving(false);
   }
@@ -49,9 +97,11 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
     const bal = {};
     members.forEach(m => (bal[m.id] = 0));
     expenses.forEach(e => {
-      const share = e.amount / e.splitIds.length;
-      e.splitIds.forEach(id => { bal[id] = (bal[id] || 0) - share; });
-      bal[e.payer_id ?? e.payerId] = (bal[e.payer_id ?? e.payerId] || 0) + e.amount;
+      const splits = e.splitIds && e.splitIds.length > 0 ? e.splitIds : members.map(m => m.id);
+      const share = e.amount / splits.length;
+      splits.forEach(id => { bal[id] = (bal[id] || 0) - share; });
+      const pId = e.payerId;
+      if (pId) bal[pId] = (bal[pId] || 0) + e.amount;
     });
     return bal;
   }, [expenses, members]);
@@ -65,7 +115,7 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
     const c = creditors.map(x => ({ ...x }));
     while (i < d.length && j < c.length) {
       const amount = Math.min(-d[i].bal, c[j].bal);
-      result.push({ from: d[i].name, to: c[j].name, amount });
+      result.push({ from: d[i].name, to: c[j].name, amount, fromId: d[i].id });
       d[i].bal += amount;
       c[j].bal -= amount;
       if (Math.abs(d[i].bal) < 0.01) i++;
@@ -74,15 +124,18 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
     return result;
   }, [balances, members]);
 
-  const getName = id => members.find(m => m.id === id)?.name || "?";
-  const getPayerId = e => e.payer_id ?? e.payerId;
+  const getName = id => members.find(m => m.id === id)?.name || "Nieznany";
 
   return (
-    <div style={{ display:"flex", flexDirection:"column", gap:"16px" }}>
-
+    <div className="finanse-container">
       {/* Bilans */}
       <div className="card">
-        <div className="card-title"><span>⚖</span> Bilans</div>
+        <div className="card-title">
+          <svg className="w-5 h-5 text-aurora" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
+          </svg>
+          Bilans rozliczeń
+        </div>
         <div className="balance-grid">
           {members.map(m => {
             const b = balances[m.id] || 0;
@@ -104,17 +157,22 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
 
       {/* Sugerowane przelewy */}
       {transfers.length > 0 && (
-        <div className="card">
-          <div className="card-title"><span>↔</span> Sugerowane przelewy</div>
+        <div className="card animate-fade-in">
+          <div className="card-title">
+            <svg className="w-5 h-5 text-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+            Sugerowane przelewy zwrotne
+          </div>
           <ul className="transfer-list">
             {transfers.map((t, i) => (
               <li key={i} className="transfer-item">
-                <div className="avatar avatar-sm" style={{ background: getAvatarColor(members.find(m => m.name === t.from)?.id || 1) }}>
+                <div className="avatar avatar-sm" style={{ background: getAvatarColor(t.fromId) }}>
                   {initials(t.from)}
                 </div>
-                <span style={{ fontSize:"14px" }}>{t.from}</span>
+                <span className="transfer-person">{t.from}</span>
                 <span className="transfer-arrow">→</span>
-                <span style={{ fontSize:"14px" }}>{t.to}</span>
+                <span className="transfer-person">{t.to}</span>
                 <span className="transfer-amount">{t.amount.toFixed(2)} zł</span>
               </li>
             ))}
@@ -122,59 +180,67 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
         </div>
       )}
 
-      {/* Lista wydatków */}
+      {/* Lista i Formularz Wydatków */}
       <div className="card">
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"16px" }}>
           <div className="card-title" style={{ margin:0 }}>
-            <span>💸</span> Wydatki ({expenses.length})
+            <svg className="w-5 h-5 text-aurora" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            Lista wydatków ({expenses.length})
           </div>
-          <button className="btn btn-primary btn-sm" onClick={() => setShowForm(v => !v)}>
-            {showForm ? "✕ Anuluj" : "+ Dodaj"}
-          </button>
+          {!showForm && (
+            <button className="btn btn-primary btn-sm" onClick={() => setShowForm(true)}>
+              + Dodaj wydatek
+            </button>
+          )}
         </div>
 
         {showForm && (
-          <div className="add-form" style={{ marginBottom:"16px" }}>
-            <div className="add-form-title">Nowy wydatek</div>
+          <div className="add-form Form-Expense-Block">
+            <div className="add-form-title">
+              {editingId ? "Edytuj wydatek" : "Nowy wydatek"}
+            </div>
             <div className="form-group">
-              <label className="form-label">Tytuł</label>
-              <input type="text" placeholder="np. Jedzenie, Paliwo..." value={form.title}
+              <label className="form-label">Tytuł wydatku</label>
+              <input type="text" placeholder="np. Zakupy w Kirunie, Paliwo..." value={form.title}
                 onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
             </div>
             <div className="form-group">
-              <label className="form-label">Kwota</label>
+              <label className="form-label">Kwota i Waluta</label>
               <div className="input-row">
                 <input type="number" placeholder="0.00" min="0" step="0.01" value={form.amount}
                   onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} />
                 <select value={form.currency} onChange={e => setForm(f => ({ ...f, currency: e.target.value }))}
-                  style={{ width:"90px", flex:"unset" }}>
-                  <option value="PLN">PLN</option>
-                  <option value="EUR">EUR</option>
+                  style={{ width:"100px", flex:"unset" }}>
+                  <option value="PLN">PLN (zł)</option>
+                  <option value="EUR">EUR (€)</option>
                 </select>
               </div>
               {form.currency === "EUR" && parseFloat(form.amount) > 0 && (
-                <div style={{ fontSize:"12px", color:"var(--snow-faint)", marginTop:"4px" }}>
-                  ≈ {amountPLN.toFixed(2)} zł (kurs 4,35)
+                <div className="currency-helper">
+                  ≈ {amountPLN.toFixed(2)} zł (przelicznik stały {EUR_TO_PLN})
                 </div>
               )}
             </div>
             <div className="form-group">
-              <label className="form-label">Płaci</label>
+              <label className="form-label">Kto zapłacił?</label>
               <div className="payer-select-wrap">
                 {members.map(m => (
                   <button key={m.id}
-                    className={`payer-btn ${form.payerId === m.id ? "active" : ""}`}
+                    type="button"
+                    className={`payer-btn ${parseInt(form.payerId) === m.id ? "active" : ""}`}
                     onClick={() => setForm(f => ({ ...f, payerId: m.id }))}>
                     <div className="avatar avatar-sm" style={{ background: getAvatarColor(m.id) }}>
                       {initials(m.name)}
                     </div>
-                    {m.name}
+                    <span>{m.name}</span>
                   </button>
                 ))}
               </div>
             </div>
             <div className="form-group">
-              <label className="form-label">Dzielone między</label>
+              <label className="form-label">Uczestnicy podziału (kliknij aby wykluczyć)</label>
               <div className="person-tiles">
                 {members.map(m => (
                   <div key={m.id} className={`person-tile ${form.splitIds.includes(m.id) ? "selected" : ""}`}
@@ -182,48 +248,70 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
                     <div className="avatar avatar-sm" style={{ background: getAvatarColor(m.id) }}>
                       {initials(m.name)}
                     </div>
-                    {m.name}
+                    <span>{m.name}</span>
                   </div>
                 ))}
               </div>
               {form.splitIds.length > 0 && amountPLN > 0 && (
-                <div style={{ fontSize:"12px", color:"var(--snow-faint)", marginTop:"6px" }}>
-                  {(amountPLN / form.splitIds.length).toFixed(2)} zł / osoba ({form.splitIds.length} os.)
+                <div className="currency-helper" style={{ color: "var(--aurora)", fontWeight: 500 }}>
+                  {(amountPLN / form.splitIds.length).toFixed(2)} zł na osobę ({form.splitIds.length} os.)
                 </div>
               )}
             </div>
-            <button className="btn btn-primary btn-full" onClick={addExpense} disabled={saving}>
-              {saving ? "Zapisuję..." : "Zapisz wydatek"}
-            </button>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button className="btn btn-primary style-submit-btn" style={{ flex: 2 }} onClick={saveExpense} disabled={saving}>
+                {saving ? "Zapisywanie..." : editingId ? "Zapisz zmiany" : "Dodaj wydatek"}
+              </button>
+              <button className="btn btn-outline" style={{ flex: 1 }} onClick={cancelEdit}>
+                Anuluj
+              </button>
+            </div>
           </div>
         )}
 
         {expenses.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">🧾</div>
-            <div>Brak wydatków. Dodaj pierwszy!</div>
+            <div className="empty-icon">
+              <svg className="w-12 h-12 mx-auto text-snow-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </div>
+            <div>Brak zarejestrowanych wydatków w tej wyprawie.</div>
           </div>
         ) : (
           <ul className="expense-list">
-            {expenses.map(e => (
-              <li key={e.id} className="expense-item">
-                <div className="avatar" style={{ background: getAvatarColor(getPayerId(e)) }}>
-                  {initials(getName(getPayerId(e)))}
-                </div>
-                <div className="expense-info">
-                  <div className="expense-title">{e.title}</div>
-                  <div className="expense-meta">
-                    {getName(getPayerId(e))} płaci · {e.splitIds.length} os. ·{" "}
-                    {e.currency === "EUR" ? `${parseFloat(e.original_amount).toFixed(2)} EUR · ` : ""}
-                    {e.date}
+            {expenses.map(e => {
+              const splitsCount = e.splitIds ? e.splitIds.length : members.length;
+              return (
+                <li key={e.id} className="expense-item">
+                  <div className="avatar" style={{ background: getAvatarColor(e.payerId) }}>
+                    {initials(getName(e.payerId))}
                   </div>
-                </div>
-                <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:"4px" }}>
-                  <div className="expense-amount">{parseFloat(e.amount).toFixed(2)} zł</div>
-                  <button className="btn btn-ghost btn-sm" onClick={() => onDeleteExpense(e.id)}>✕</button>
-                </div>
-              </li>
-            ))}
+                  <div className="expense-info">
+                    <div className="expense-title">{e.title}</div>
+                    <div className="expense-meta">
+                      Płatnik: <strong>{getName(e.payerId)}</strong> · Dzielone na {splitsCount} os.
+                      {e.currency === "EUR" && ` · (${parseFloat(e.original_amount).toFixed(2)} €)`}
+                    </div>
+                  </div>
+                  <div className="expense-end-block">
+                    <div className="expense-amount">{parseFloat(e.amount).toFixed(2)} zł</div>
+                    <div className="expense-actions-row">
+                      <button className="btn-icon-action btn-edit-icon" onClick={() => startEdit(e)} title="Edytuj">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                      </button>
+                      <button className="btn-icon-action btn-delete-icon" onClick={() => onDeleteExpense(e.id)} title="Usuń">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

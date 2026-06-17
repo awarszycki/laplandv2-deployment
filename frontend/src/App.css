@@ -839,3 +839,193 @@ select option { background: #ffffff; color: var(--snow); }
   .member-list { grid-template-columns: 1fr; }
   .card { padding: 18px 16px; }
 }
+
+/* ==========================================================================
+   NOWE STYLE: Responsywność, tło obrazkowe i akcje edycji (Dodaj na koniec App.css)
+   ========================================================================== */
+
+/* Stylizacja obrazu w tle z nienachalnym overlayem */
+.app-bg-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.06; /* Bardzo delikatna, nienachalna widoczność */
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Dostosowanie warstw pod z-index bocznych elementów */
+.app-header, .app-main, .login-card, .btn {
+  position: relative;
+  z-index: 1;
+}
+
+/* Elementy usuwania projektów */
+.row-project-item {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.btn-project-delete {
+  background: transparent;
+  border: none;
+  color: var(--snow-faint);
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-project-delete:hover {
+  color: var(--aurora);
+  background: rgba(224, 85, 85, 0.15);
+}
+
+/* Przyciski edycji i usuwania w wydatkach */
+.expense-end-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.expense-actions-row {
+  display: flex;
+  gap: 4px;
+}
+
+.btn-icon-action {
+  background: var(--night-raise);
+  border: 1px solid var(--night-border);
+  color: var(--snow-faint);
+  padding: 5px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.btn-icon-action:hover {
+  color: var(--snow);
+  border-color: var(--snow-faint);
+}
+
+.btn-delete-icon:hover {
+  background: rgba(224, 85, 85, 0.15);
+  color: var(--aurora);
+  border-color: var(--aurora);
+}
+
+.btn-edit-icon:hover {
+  background: rgba(240, 165, 0, 0.15);
+  color: var(--amber);
+  border-color: var(--amber);
+}
+
+/* RESPONSIVENESS: Mobilna rewolucja przeciw nakładaniu się menu */
+@media (max-width: 768px) {
+  .app-header {
+    padding: 10px 12px;
+  }
+  
+  .header-inner {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
+  .header-brand {
+    max-width: 65%;
+  }
+
+  .header-brand h1 {
+    font-size: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .back-to-trips-btn {
+    padding: 4px 8px !important;
+    font-size: 11px !important;
+  }
+
+  .desktop-only {
+    display: none !important;
+  }
+
+  .app-main {
+    padding: 12px 12px 80px 12px; /* Margines dolny chroniący przed zasłanianiem przez dolny pasek */
+  }
+
+  /* Dolna nawigacja aplikacji dla smartfonów */
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: var(--night-card);
+    border-top: 1px solid var(--night-border);
+    height: 60px;
+    z-index: 999;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.3);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+  }
+
+  .mobile-nav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--snow-faint);
+    gap: 2px;
+    cursor: pointer;
+  }
+
+  .mobile-nav-btn.active {
+    color: var(--aurora);
+    background: rgba(0, 200, 150, 0.05);
+  }
+
+  .mobile-nav-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .mobile-nav-label {
+    font-size: 10px;
+    font-weight: 500;
+  }
+  
+  /* Układ kafelków w bilansie finansów */
+  .balance-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-bottom-nav {
+    display: none !important;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
