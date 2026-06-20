@@ -63,7 +63,7 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
   }
 
   async function saveExpense() {
-    if (!form.title.trim() || !form.amount || form.splitIds.length === 0) return;
+    if (!form.title.trim() || !form.amount || form.splitIds.length === 0 || !form.payerId) return;
     setSaving(true);
     
     const expenseData = {
@@ -259,8 +259,8 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
               )}
             </div>
             <div style={{ display: "flex", gap: "10px" }}>
-              <button className="btn btn-primary style-submit-btn" style={{ flex: 2 }} onClick={saveExpense} disabled={saving}>
-                {saving ? "Zapisywanie..." : editingId ? "Zapisz zmiany" : "Dodaj wydatek"}
+              <button className="btn btn-primary style-submit-btn" style={{ flex: 2 }} onClick={saveExpense} disabled={saving || !form.payerId}>
+                {saving ? "Zapisywanie..." : !form.payerId ? "Wybierz płatnika" : editingId ? "Zapisz zmiany" : "Dodaj wydatek"}
               </button>
               <button className="btn btn-outline" style={{ flex: 1 }} onClick={cancelEdit}>
                 Anuluj

@@ -126,6 +126,15 @@ async def create_project(project: ProjectCreate, pool=Depends(get_db_pool)):
             )
             return {**project.model_dump(), "id": cur.lastrowid}
 
+@app.delete("/api/projects/{project_id}")
+async def delete_project(project_id: int, pool=Depends(get_db_pool)):
+    async with pool.acquire() as conn:
+        async with conn.cursor() as cur:
+            await cur.execute("DELETE FROM projects WHERE id = %s", (project_id,))
+            if cur.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Projekt nie istnieje")
+            return {"status": "success"}
+
 # ── UCZESTNICY ────────────────────────────────────────────────────────
 
 @app.get("/api/members", response_model=List[Member])

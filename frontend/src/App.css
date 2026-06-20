@@ -1029,3 +1029,31 @@ select option { background: #ffffff; color: var(--snow); }
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Utility classes dla SVG ikon i tekstu */
+.w-3, .w-4, .w-5, .w-6, .w-12 { width: auto; }
+.w-3 { width: 12px; }
+.w-4 { width: 16px; }
+.w-5 { width: 20px; }
+.w-6 { width: 24px; }
+.w-12 { width: 48px; }
+
+.h-3, .h-4, .h-5, .h-6, .h-12 { height: auto; }
+.h-3 { height: 12px; }
+.h-4 { height: 16px; }
+.h-5 { height: 20px; }
+.h-6 { height: 24px; }
+.h-12 { height: 48px; }
+
+.text-snow { color: var(--snow); }
+.text-snow-dim { color: var(--snow-dim); }
+.text-snow-faint { color: var(--snow-faint); }
+.text-aurora { color: var(--aurora); }
+.text-ice { color: var(--ice); }
+.text-amber { color: var(--amber); }
+.text-danger { color: var(--danger); }
+
+.mx-auto { margin-left: auto; margin-right: auto; }
+.mt-2 { margin-top: 8px; }
+.mb-2 { margin-bottom: 8px; }
+.ml-3 { margin-left: 12px; }
