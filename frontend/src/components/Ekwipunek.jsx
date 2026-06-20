@@ -1,29 +1,42 @@
 import { useState } from "react";
+// Importowanie wszystkich potrzebnych ikon wektorowych
+import { 
+  FaTshirt, 
+  FaBed, 
+  FaUtensils, 
+  FaCompass, 
+  FaBatteryFull, 
+  FaPumpSoap, 
+  FaSuitcase, 
+  FaFileAlt,
+  FaHandshake,
+  FaBoxOpen
+} from "react-icons/fa";
 
 const COLORS = ["#00c896","#f0a500","#4ca0e0","#e05555","#a78bfa","#fb923c","#34d399","#60a5fa"];
 function getAvatarColor(id) { return COLORS[(id - 1) % COLORS.length]; }
 function initials(name) { return name.slice(0, 2).toUpperCase(); }
 
 export const CATEGORIES = [
-  { id:"clothing",    label:"Odzież",      icon:"🧥" },
-  { id:"camp",        label:"Biwak",        icon:"🛌" },
-  { id:"food",        label:"Jedzenie",     icon:"🍳" },
-  { id:"nav",         label:"Nawigacja",    icon:"🧭" },
-  { id:"electronics", label:"Elektronika",  icon:"🔋" },
-  { id:"hygiene",     label:"Higiena",      icon:"🧴" },
-  { id:"bag",         label:"Bagaż",        icon:"🎒" },
-  { id:"docs",        label:"Dokumenty",    icon:"📄" },
+  { id:"clothing",    label:"Odzież",     icon: <FaTshirt /> },
+  { id:"camp",        label:"Biwak",      icon: <FaBed /> },
+  { id:"food",        label:"Jedzenie",   icon: <FaUtensils /> },
+  { id:"nav",         label:"Nawigacja",  icon: <FaCompass /> },
+  { id:"electronics", label:"Elektronika", icon: <FaBatteryFull /> },
+  { id:"hygiene",     label:"Higiena",    icon: <FaPumpSoap /> },
+  { id:"bag",         label:"Bagaż",      icon: <FaSuitcase /> },
+  { id:"docs",        label:"Dokumenty",  icon: <FaFileAlt /> },
 ];
 
 const CAT_SUGGESTIONS = {
-  clothing:    ["Bielizna termiczna","Koszulka z długim rękawem","Koszulka (x3)","Bluza/polar","Kurtka przeciwdeszczowa","Spodnie trekkingowe","Spodnie na deszcz","Skarpety (x5)","Bielizna (x5)","Czapka","Rękawiczki lekkie","Buff/komin","Buty trekkingowe","Sandały/kapcie obozowe"],
-  camp:        ["Śpiwór (letni/3-sezonowy)","Karimat / mata śpiąca","Poduszka dmuchana","Wkładka do śpiwora","Latarka czołowa do namiotu"],
-  food:        ["Liofilizaty (x5)","Czekolada / batoniki","Orzechy i suszone owoce","Płatki owsiane","Herbata / kawa","Kuchenka gazowa","Kartusz gazowy","Menażka / garnek","Kubek turystyczny","Sztućce","Termos","Butelka na wodę","Filtr do wody / tabletki"],
-  nav:         ["Mapa topograficzna","Kompas","Latarka czołowa","Baterie zapasowe","Koc NRC","Gwizdek","Repelent na komary (DEET)","Siatka na komary","Nóż / multitool","Zapalniczka / zapałki"],
-  electronics: ["Telefon","Powerbank","Kabel USB-C","Ładowarka","Aparat fotograficzny","Karta pamięci zapasowa","Słuchawki","Adapter do gniazdek EU"],
-  hygiene:     ["Apteczka osobista","Leki na receptę","Tabletki przeciwbólowe","Plastry / opatrunki","Krem z filtrem SPF 50+","Balsam do ust z filtrem","Pasta do zębów + szczoteczka","Mydło w kostce","Ręcznik szybkoschnący","Papier toaletowy","Chusteczki mokre","Płyn do dezynfekcji rąk"],
-  bag:         ["Plecak trekkingowy (40-60L)","Pokrowiec przeciwdeszczowy","Torba / walizka na samolot","Worki wodoszczelne / dry bag","Kłódka do bagażu","Organizery / packing cubes"],
-  docs:        ["Paszport","Ubezpieczenie podróżne","Prawo jazdy","Karta płatnicza","Gotówka (EUR)","Numer ICE (w telefonie)","Potwierdzenia rezerwacji","Mapa offline w telefonie"],
+  clothing:    ["Bielizna termiczna", "Koszulka z długim rękawem", "Kurtka przeciwdeszczowa", "Spodnie trekkingowe"],
+  camp:        ["Śpiwór (letni/3-sezonowy)", "Karimat / mata śpiąca", "Latarka czołowa do namiotu"],
+  food:        ["Liofilizaty (x5)", "Kuchenka gazowa", "Kartusz gazowy", "Termos", "Butelka na wodę"],
+  nav:         ["Mapa topograficzna", "Kompas", "Latarka czołowa", "Nóż / multitool"],
+  electronics: ["Telefon", "Powerbank", "Kabel USB-C", "Ładowarka"],
+  hygiene:     ["Apteczka osobista", "Plastry / opatrunki", "Pasta do zębów + szczoteczka", "Ręcznik szybkoschnący"],
+  bag:         ["Plecak trekkingowy (40-60L)", "Pokrowiec przeciwdeszczowy", "Worki wodoszczelne"],
+  docs:        ["Paszport", "Ubezpieczenie podróżne", "Karta płatnicza", "Gotówka (EUR)"],
 };
 
 function ProgressBar({ done, total }) {
@@ -46,7 +59,7 @@ export default function Ekwipunek({
 }) {
   const [activeProfile, setActiveProfile] = useState(currentUser?.id || members[0]?.id || null);
   const [activeCat, setActiveCat]         = useState("clothing");
-  const [newItem, setNewItem]             = useState("");
+  const [newItem, setNewItem]              = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [newSharedItem, setNewSharedItem] = useState("");
 
@@ -108,7 +121,7 @@ export default function Ekwipunek({
             return (
               <button key={cat.id} className={`cat-btn ${activeCat === cat.id ? "active" : ""}`}
                 onClick={() => setActiveCat(cat.id)} title={cat.label}>
-                <span className="cat-btn-icon">{cat.icon}</span>
+                <span className="cat-btn-icon" style={{ display: "inline-flex", alignItems: "center" }}>{cat.icon}</span>
                 <span className="cat-btn-label">{cat.label}</span>
                 {total > 0
                   ? <span className={`cat-btn-badge${packed === total ? " done" : ""}`}>{packed === total ? "✓" : `${packed}/${total}`}</span>
@@ -123,7 +136,7 @@ export default function Ekwipunek({
       {/* Active category panel */}
       <div className="card">
         <div style={{ display:"flex", alignItems:"center", gap:"10px", marginBottom:"14px", paddingBottom:"12px", borderBottom:"1px solid var(--night-border)" }}>
-          <span style={{ fontSize:"22px" }}>{currentCat.icon}</span>
+          <span style={{ fontSize:"22px", display: "inline-flex", alignItems: "center" }}>{currentCat.icon}</span>
           <div style={{ flex:1 }}>
             <div style={{ fontWeight:700, fontSize:"15px", fontFamily:"var(--font-display)" }}>{currentCat.label}</div>
             {catItems.length > 0 && <ProgressBar done={catItems.filter(i => i.packed).length} total={catItems.length} />}
@@ -137,7 +150,7 @@ export default function Ekwipunek({
 
         {catItems.length === 0 ? (
           <div className="empty-state" style={{ padding:"20px 0" }}>
-            <div className="empty-icon">{currentCat.icon}</div>
+            <div className="empty-icon" style={{ display: "inline-flex", justifyContent: "center" }}>{currentCat.icon}</div>
             <div>Brak przedmiotów — dodaj poniżej lub wybierz z sugestii</div>
           </div>
         ) : (
@@ -192,7 +205,7 @@ export default function Ekwipunek({
       {/* Shared gear */}
       <div className="card">
         <div className="card-title">
-          <span>🤝</span> Wspólna lista
+          <span style={{ display: "inline-flex", alignItems: "center", marginRight: "6px" }}><FaHandshake /></span> Wspólna lista
           {sharedGear.length > 0 && (
             <span style={{ marginLeft:"auto", fontSize:"11px", fontFamily:"var(--font-display)", color:"var(--snow-faint)" }}>
               {sharedPacked}/{sharedGear.length}
@@ -203,7 +216,8 @@ export default function Ekwipunek({
 
         {sharedGear.length === 0 ? (
           <div className="empty-state" style={{ padding:"14px 0" }}>
-            <div className="empty-icon">📦</div><div>Brak pozycji</div>
+            <div className="empty-icon" style={{ display: "inline-flex", justifyContent: "center" }}><FaBoxOpen /></div>
+            <div>Brak pozycji</div>
           </div>
         ) : (
           <ul className="gear-list">
