@@ -840,9 +840,7 @@ select option { background: #ffffff; color: var(--snow); }
   .card { padding: 18px 16px; }
 }
 
-/* ==========================================================================
-   NOWE STYLE: Responsywność, tło obrazkowe i akcje edycji (Dodaj na koniec App.css)
-   ========================================================================== */
+
 
 /* Stylizacja obrazu w tle z nienachalnym overlayem */
 .app-bg-overlay {

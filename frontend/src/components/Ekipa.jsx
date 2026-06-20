@@ -1,4 +1,6 @@
 import { useState } from "react";
+// 1. Importujemy profesjonalne ikony z zestawu Lucide (lu)
+import { LuUsers, LuReceipt, LuCoins, LuSwords, LuLayoutDashboard, LuPencil, LuTrash2 } from "react-icons/lu";
 
 const COLORS = ["#00c896","#f0a500","#4ca0e0","#e05555","#a78bfa","#fb923c","#34d399","#60a5fa"];
 function getAvatarColor(id) { return COLORS[(id - 1) % COLORS.length]; }
@@ -44,15 +46,19 @@ export default function Ekipa({ members, expenses, myGear, currentUser, onAddMem
 
       {/* Podsumowanie */}
       <div className="card">
-        <div className="card-title"><span>📊</span> Podsumowanie wyprawy</div>
+        {/* Zmieniono emoji 📊 na ikonę LuLayoutDashboard */}
+        <div className="card-title" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <LuLayoutDashboard size={20} /> Podsumowanie wyprawy
+        </div>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:"10px" }}>
           {[
-            { label:"Uczestników", value: members.length, icon:"🧍" },
-            { label:"Wydatków",    value: expenses.length, icon:"🧾" },
-            { label:"Łącznie",     value: totalSpent.toFixed(2) + " zł", icon:"💰" },
+            // Zmieniono emoji na gotowe komponenty React Icons
+            { label:"Uczestników", value: members.length, icon: <LuUsers size={24} color="#4ca0e0" /> },
+            { label:"Wydatków",    value: expenses.length, icon: <LuReceipt size={24} color="#f0a500" /> },
+            { label:"Łącznie",     value: totalSpent.toFixed(2) + " zł", icon: <LuCoins size={24} color="#00c896" /> },
           ].map(stat => (
-            <div key={stat.label} className="balance-item">
-              <div style={{ fontSize:"20px", marginBottom:"6px" }}>{stat.icon}</div>
+            <div key={stat.label} className="balance-item" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <div style={{ marginBottom:"6px", display: "flex", alignItems: "center" }}>{stat.icon}</div>
               <div className="balance-name">{stat.label}</div>
               <div className="balance-amount" style={{ color:"var(--amber)", fontSize:"15px" }}>{stat.value}</div>
             </div>
@@ -62,7 +68,10 @@ export default function Ekipa({ members, expenses, myGear, currentUser, onAddMem
 
       {/* Lista uczestników */}
       <div className="card">
-        <div className="card-title"><span>⚔️</span> Ekipa ({members.length} os.)</div>
+        {/* Zmieniono emoji ⚔️ na ikonę LuSwords */}
+        <div className="card-title" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <LuSwords size={20} /> Ekipa ({members.length} os.)
+        </div>
 
         <ul className="member-list">
           {members.map(m => {
@@ -101,10 +110,15 @@ export default function Ekipa({ members, expenses, myGear, currentUser, onAddMem
                   </div>
                 </div>
                 {!isEd && (
-                  <div className="member-actions">
-                    <button className="btn btn-outline btn-sm" onClick={() => { setEditingId(m.id); setEditingName(m.name); }}>✏</button>
-                    <button className="btn btn-danger btn-sm" onClick={() => removeMember(m.id)}
-                      disabled={hasExpenses(m.id)}>🗑</button>
+                  <div className="member-actions" style={{ display: "flex", gap: "4px" }}>
+                    {/* Zmieniono emoji ✏ na LuPencil */}
+                    <button className="btn btn-outline btn-sm" style={{ display: "flex", alignItems: "center" }} onClick={() => { setEditingId(m.id); setEditingName(m.name); }}>
+                      <LuPencil size={14} />
+                    </button>
+                    {/* Zmieniono emoji 🗑 na LuTrash2 */}
+                    <button className="btn btn-danger btn-sm" style={{ display: "flex", alignItems: "center" }} onClick={() => removeMember(m.id)} disabled={hasExpenses(m.id)}>
+                      <LuTrash2 size={14} />
+                    </button>
                   </div>
                 )}
               </li>
