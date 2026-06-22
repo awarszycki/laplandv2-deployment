@@ -48,17 +48,28 @@ export default function Dashboard({ project, onBack }) {
 
   // Bezpieczna normalizacja wydatków (usuwa błąd splitIds is undefined)
   const normalizeExpenses = useCallback((rawExpenses) => {
-    return rawExpenses.map(e => ({
-      ...e,
-      id: e.id,
-      title: e.title ?? e.description ?? "Wydatek",
-      amount: parseFloat(e.amount || 0),
-      original_amount: parseFloat(e.original_amount ?? e.amount ?? 0),
-      currency: e.currency || "PLN",
-      payerId: e.payer_id ?? e.paid_by_id,
-      splitIds: e.split_ids ?? e.splitIds ?? [],
-      date: e.date || ""
-    }));
+    return rawExpenses.map(e => {
+      const amount = parseFloat(e.amount || 0);
+      // BUGFIX: Upewnij się że original_amount jest zawsze poprawnie ustalone
+      // Jeśli original_amount nie istnieje, ustaw go na amount
+      // (są to zwykle wydatki w PLN gdzie original_amount == amount)
+      let original_amount = parseFloat(e.original_amount || 0);
+      if (original_amount <= 0 && amount > 0) {
+        original_amount = amount;
+      }
+      
+      return {
+        ...e,
+        id: e.id,
+        title: e.title ?? e.description ?? "Wydatek",
+        amount: amount,
+        original_amount: original_amount,
+        currency: e.currency || "PLN",
+        payerId: e.payer_id ?? e.paid_by_id,
+        splitIds: e.split_ids ?? e.splitIds ?? [],
+        date: e.date || ""
+      };
+    });
   }, []);
 
   useEffect(() => {

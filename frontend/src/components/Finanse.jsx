@@ -39,10 +39,24 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
 
   function startEdit(e) {
     setEditingId(e.id);
+    // BUGFIX: Poprawnie ładuj original_amount na podstawie waluty
+    // Jeśli waluta to EUR, original_amount powinien być kwotą w EUR
+    // Jeśli waluta to PLN, może być null (wtedy amount jest równy original_amount)
+    let loadAmount = e.amount; // domyślnie ładuj kwotę w PLN
+    const currency = e.currency || "PLN";
+    
+    if (currency === "EUR" && e.original_amount) {
+      // Jeśli jest EUR, original_amount powinien zawierać wartość w EUR
+      loadAmount = e.original_amount;
+    } else if (currency === "PLN" && e.original_amount) {
+      // Dla PLN, original_amount = amount
+      loadAmount = e.original_amount;
+    }
+    
     setForm({
       title: e.title,
-      amount: e.original_amount ?? e.amount,
-      currency: e.currency || "PLN",
+      amount: loadAmount,
+      currency: currency,
       payerId: e.payerId,
       splitIds: e.splitIds && e.splitIds.length > 0 ? e.splitIds : members.map(m => m.id),
     });
@@ -66,10 +80,21 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
     if (!form.title.trim() || !form.amount || form.splitIds.length === 0 || !form.payerId) return;
     setSaving(true);
     
+    // BUGFIX: Solidna obsługa liczb - zaokrąglenie do 2 miejsc po przecinku
+    const originalAmount = Math.round(parseFloat(form.amount) * 100) / 100;
+    const convertedAmount = Math.round(amountPLN * 100) / 100;
+    
+    // Dodatkowa walidacja - jeśli kwota to 0 lub NaN, nie zapisuj
+    if (isNaN(originalAmount) || originalAmount <= 0) {
+      setSaving(false);
+      alert("Kwota musi być większa od 0");
+      return;
+    }
+    
     const expenseData = {
       title: form.title.trim(),
-      amount: amountPLN,
-      originalAmount: parseFloat(form.amount),
+      amount: convertedAmount,
+      originalAmount: originalAmount,
       currency: form.currency,
       payerId: parseInt(form.payerId),
       splitIds: form.splitIds.map(id => parseInt(id)),

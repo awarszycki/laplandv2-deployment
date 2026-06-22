@@ -217,20 +217,25 @@ async def create_expense(expense: ExpenseCreate, pool=Depends(get_db_pool)):
     paid_by = expense.paid_by_id or expense.payer_id
     title   = expense.title or expense.description or ""
     split_ids_str = ",".join(str(i) for i in (expense.split_ids or [paid_by]))
+    
+    # BUGFIX: Gwarantuj że original_amount jest zawsze ustawiony
+    # Jeśli nie ma original_amount, użyj amount (dla kompatybilności wstecznej z PLN)
+    original_amt = expense.original_amount if expense.original_amount else expense.amount
+    
     async with pool.acquire() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
                 "INSERT INTO expenses (title, description, amount, paid_by_id, project_id, "
                 "split_ids, currency, original_amount) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
                 (title, title, expense.amount, paid_by, expense.project_id,
-                 split_ids_str, expense.currency or "PLN", expense.original_amount)
+                 split_ids_str, expense.currency or "PLN", original_amt)
             )
             row_id = cur.lastrowid
     return _norm_expense({
         "id": row_id, "title": title, "description": title,
         "amount": expense.amount, "paid_by_id": paid_by,
         "project_id": expense.project_id, "split_ids": split_ids_str,
-        "currency": expense.currency or "PLN", "original_amount": expense.original_amount,
+        "currency": expense.currency or "PLN", "original_amount": original_amt,
     })
 
 @app.put("/api/expenses/{expense_id}")
@@ -238,6 +243,11 @@ async def update_expense(expense_id: int, expense: ExpenseCreate, pool=Depends(g
     paid_by = expense.paid_by_id or expense.payer_id
     title   = expense.title or expense.description or ""
     split_ids_str = ",".join(str(i) for i in (expense.split_ids or [paid_by]))
+    
+    # BUGFIX: Gwarantuj że original_amount jest zawsze ustawiony
+    # Jeśli nie ma original_amount, użyj amount (dla kompatybilności wstecznej z PLN)
+    original_amt = expense.original_amount if expense.original_amount else expense.amount
+    
     async with pool.acquire() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
@@ -245,7 +255,7 @@ async def update_expense(expense_id: int, expense: ExpenseCreate, pool=Depends(g
                 "split_ids=%s, currency=%s, original_amount=%s "
                 "WHERE id=%s AND project_id=%s",
                 (title, title, expense.amount, paid_by,
-                 split_ids_str, expense.currency or "PLN", expense.original_amount,
+                 split_ids_str, expense.currency or "PLN", original_amt,
                  expense_id, expense.project_id)
             )
             if cur.rowcount == 0:
@@ -254,7 +264,7 @@ async def update_expense(expense_id: int, expense: ExpenseCreate, pool=Depends(g
         "id": expense_id, "title": title, "description": title,
         "amount": expense.amount, "paid_by_id": paid_by,
         "project_id": expense.project_id, "split_ids": split_ids_str,
-        "currency": expense.currency or "PLN", "original_amount": expense.original_amount,
+        "currency": expense.currency or "PLN", "original_amount": original_amt,
     })
 
 @app.delete("/api/expenses/{expense_id}")
