@@ -7,12 +7,12 @@ import os
 app = FastAPI(title="Lapland v2 API")
 
 DB_CONFIG = {
-    "host": os.getenv("DB_HOST", "lapland_db"),
-    "port": int(os.getenv("DB_PORT", 3306)),
-    "user": os.getenv("DB_USER", "lapland"),
+    "host":     os.getenv("DB_HOST", "lapland_db"),
+    "port":     int(os.getenv("DB_PORT", 3306)),
+    "user":     os.getenv("DB_USER", "lapland"),
     "password": os.getenv("DB_PASSWORD", "lapland_pass"),
-    "db": os.getenv("DB_NAME", "lapland"),
-    "autocommit": True
+    "db":       os.getenv("DB_NAME", "lapland"),
+    "autocommit": True,
 }
 
 async def get_db_pool():
@@ -49,37 +49,40 @@ class Member(MemberBase):
     id: int
 
 class ExpenseBase(BaseModel):
-    description: Optional[str] = None
-    title: Optional[str] = None          # alias used by Finanse.jsx
-    amount: float
-    paid_by_id: Optional[int] = None
-    payer_id: Optional[int] = None       # alias used by Finanse.jsx
-    project_id: int
-    split_ids: Optional[List[int]] = None
-    currency: Optional[str] = "PLN"
+    description:     Optional[str]   = None
+    title:           Optional[str]   = None
+    amount:          float
+    paid_by_id:      Optional[int]   = None
+    payer_id:        Optional[int]   = None
+    project_id:      int
+    split_ids:       Optional[List[int]] = None
+    currency:        Optional[str]   = "PLN"
     original_amount: Optional[float] = None
 
 class ExpenseCreate(ExpenseBase):
     pass
 
 class Expense(BaseModel):
-    id: int
-    title: str
-    description: str
-    amount: float
-    paid_by_id: int
-    payer_id: int
-    project_id: int
-    split_ids: List[int]
-    currency: str
+    id:              int
+    title:           str
+    description:     str
+    amount:          float
+    paid_by_id:      int
+    payer_id:        int
+    project_id:      int
+    split_ids:       List[int]
+    currency:        str
     original_amount: Optional[float]
 
+# ── Ekwipunek osobisty ──────────────────────────────────────────────
+
 class GearItemBase(BaseModel):
-    name: str
-    category: str
-    member_id: int
+    name:       str
+    category:   str
+    member_id:  int
     project_id: int
-    packed: bool = False
+    packed:     bool         = False
+    weight_g:   Optional[int] = None   # None → brak wagi (nie wyświetlamy)
 
 class GearItemCreate(GearItemBase):
     pass
@@ -88,14 +91,18 @@ class GearItem(GearItemBase):
     id: int
 
 class GearItemPatch(BaseModel):
-    packed: Optional[bool] = None
-    name: Optional[str] = None
+    packed:   Optional[bool] = None
+    name:     Optional[str]  = None
+    weight_g: Optional[int]  = None
+
+# ── Ekwipunek wspólny ───────────────────────────────────────────────
 
 class SharedGearBase(BaseModel):
-    name: str
+    name:       str
     project_id: int
-    packed: bool = False
-    taken_by: Optional[int] = None
+    packed:     bool         = False
+    taken_by:   Optional[int] = None
+    weight_g:   Optional[int] = None
 
 class SharedGearCreate(SharedGearBase):
     pass
@@ -104,8 +111,9 @@ class SharedGear(SharedGearBase):
     id: int
 
 class SharedGearPatch(BaseModel):
-    packed: Optional[bool] = None
-    taken_by: Optional[int] = None
+    packed:   Optional[bool] = None
+    taken_by: Optional[int]  = None
+    weight_g: Optional[int]  = None
 
 # ── PROJEKTY ──────────────────────────────────────────────────────────
 
@@ -122,7 +130,7 @@ async def create_project(project: ProjectCreate, pool=Depends(get_db_pool)):
         async with conn.cursor() as cur:
             await cur.execute(
                 "INSERT INTO projects (name, description) VALUES (%s, %s)",
-                (project.name, project.description)
+                (project.name, project.description),
             )
             return {**project.model_dump(), "id": cur.lastrowid}
 
@@ -152,7 +160,7 @@ async def create_member(member: MemberCreate, pool=Depends(get_db_pool)):
         async with conn.cursor() as cur:
             await cur.execute(
                 "INSERT INTO members (name, project_id) VALUES (%s, %s)",
-                (member.name, member.project_id)
+                (member.name, member.project_id),
             )
             return {**member.model_dump(), "id": cur.lastrowid}
 
@@ -162,7 +170,7 @@ async def update_member(member_id: int, member: MemberCreate, pool=Depends(get_d
         async with conn.cursor() as cur:
             await cur.execute(
                 "UPDATE members SET name=%s WHERE id=%s AND project_id=%s",
-                (member.name, member_id, member.project_id)
+                (member.name, member_id, member.project_id),
             )
             if cur.rowcount == 0:
                 raise HTTPException(status_code=404, detail="Uczestnik nie znaleziony")
@@ -207,7 +215,7 @@ async def get_expenses(project_id: int = Query(...), pool=Depends(get_db_pool)):
             await cur.execute(
                 "SELECT id, title, description, amount, paid_by_id, project_id, "
                 "split_ids, currency, original_amount FROM expenses WHERE project_id = %s",
-                (project_id,)
+                (project_id,),
             )
             rows = await cur.fetchall()
             return [_norm_expense(r) for r in rows]
@@ -217,18 +225,14 @@ async def create_expense(expense: ExpenseCreate, pool=Depends(get_db_pool)):
     paid_by = expense.paid_by_id or expense.payer_id
     title   = expense.title or expense.description or ""
     split_ids_str = ",".join(str(i) for i in (expense.split_ids or [paid_by]))
-    
-    # BUGFIX: Gwarantuj że original_amount jest zawsze ustawiony
-    # Jeśli nie ma original_amount, użyj amount (dla kompatybilności wstecznej z PLN)
-    original_amt = expense.original_amount if expense.original_amount else expense.amount
-    
+    original_amt  = expense.original_amount if expense.original_amount else expense.amount
     async with pool.acquire() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
                 "INSERT INTO expenses (title, description, amount, paid_by_id, project_id, "
                 "split_ids, currency, original_amount) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
                 (title, title, expense.amount, paid_by, expense.project_id,
-                 split_ids_str, expense.currency or "PLN", original_amt)
+                 split_ids_str, expense.currency or "PLN", original_amt),
             )
             row_id = cur.lastrowid
     return _norm_expense({
@@ -243,11 +247,7 @@ async def update_expense(expense_id: int, expense: ExpenseCreate, pool=Depends(g
     paid_by = expense.paid_by_id or expense.payer_id
     title   = expense.title or expense.description or ""
     split_ids_str = ",".join(str(i) for i in (expense.split_ids or [paid_by]))
-    
-    # BUGFIX: Gwarantuj że original_amount jest zawsze ustawiony
-    # Jeśli nie ma original_amount, użyj amount (dla kompatybilności wstecznej z PLN)
-    original_amt = expense.original_amount if expense.original_amount else expense.amount
-    
+    original_amt  = expense.original_amount if expense.original_amount else expense.amount
     async with pool.acquire() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
@@ -256,7 +256,7 @@ async def update_expense(expense_id: int, expense: ExpenseCreate, pool=Depends(g
                 "WHERE id=%s AND project_id=%s",
                 (title, title, expense.amount, paid_by,
                  split_ids_str, expense.currency or "PLN", original_amt,
-                 expense_id, expense.project_id)
+                 expense_id, expense.project_id),
             )
             if cur.rowcount == 0:
                 raise HTTPException(status_code=404, detail="Wydatek nie znaleziony")
@@ -283,36 +283,43 @@ async def get_gear(project_id: int = Query(...), pool=Depends(get_db_pool)):
     async with pool.acquire() as conn:
         async with conn.cursor(aiomysql.DictCursor) as cur:
             await cur.execute(
-                "SELECT id, name, category, member_id, project_id, packed "
-                "FROM gear_items WHERE project_id = %s", (project_id,)
+                "SELECT id, name, category, member_id, project_id, packed, "
+                "NULLIF(weight_g, 0) AS weight_g "
+                "FROM gear_items WHERE project_id = %s",
+                (project_id,),
             )
             return await cur.fetchall()
 
 @app.post("/api/gear", response_model=GearItem)
 async def create_gear(item: GearItemCreate, pool=Depends(get_db_pool)):
+    weight = item.weight_g if item.weight_g is not None else 0
     async with pool.acquire() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
-                "INSERT INTO gear_items (name, category, member_id, project_id, packed) "
-                "VALUES (%s,%s,%s,%s,%s)",
-                (item.name, item.category, item.member_id, item.project_id, item.packed)
+                "INSERT INTO gear_items (name, category, member_id, project_id, packed, weight_g) "
+                "VALUES (%s,%s,%s,%s,%s,%s)",
+                (item.name, item.category, item.member_id, item.project_id, item.packed, weight),
             )
-            return {**item.model_dump(), "id": cur.lastrowid}
+            row_id = cur.lastrowid
+    return {**item.model_dump(), "id": row_id, "weight_g": item.weight_g}
 
 @app.patch("/api/gear/{item_id}", response_model=GearItem)
 async def patch_gear(item_id: int, patch: GearItemPatch, pool=Depends(get_db_pool)):
     async with pool.acquire() as conn:
         async with conn.cursor(aiomysql.DictCursor) as cur:
-            fields = {k: v for k, v in patch.model_dump().items() if v is not None}
-            if not fields:
+            # Używamy exclude_unset=True żeby nie nadpisywać pól których nie przesłano
+            data = patch.model_dump(exclude_unset=True)
+            if not data:
                 raise HTTPException(status_code=400, detail="Brak danych do aktualizacji")
-            set_clause = ", ".join(f"{k}=%s" for k in fields)
+            set_clause = ", ".join(f"{k}=%s" for k in data)
             await cur.execute(
-                f"UPDATE gear_items SET {set_clause} WHERE id=%s", (*fields.values(), item_id)
+                f"UPDATE gear_items SET {set_clause} WHERE id=%s",
+                (*data.values(), item_id),
             )
             await cur.execute(
-                "SELECT id, name, category, member_id, project_id, packed FROM gear_items WHERE id=%s",
-                (item_id,)
+                "SELECT id, name, category, member_id, project_id, packed, "
+                "NULLIF(weight_g, 0) AS weight_g FROM gear_items WHERE id=%s",
+                (item_id,),
             )
             row = await cur.fetchone()
             if not row:
@@ -335,21 +342,25 @@ async def get_shared_gear(project_id: int = Query(...), pool=Depends(get_db_pool
     async with pool.acquire() as conn:
         async with conn.cursor(aiomysql.DictCursor) as cur:
             await cur.execute(
-                "SELECT id, name, project_id, packed, assigned_member_id AS taken_by "
-                "FROM shared_gear WHERE project_id = %s", (project_id,)
+                "SELECT id, name, project_id, packed, assigned_member_id AS taken_by, "
+                "NULLIF(weight_g, 0) AS weight_g "
+                "FROM shared_gear WHERE project_id = %s",
+                (project_id,),
             )
             return await cur.fetchall()
 
 @app.post("/api/shared_gear", response_model=SharedGear)
 async def create_shared_gear(item: SharedGearCreate, pool=Depends(get_db_pool)):
+    weight = item.weight_g if item.weight_g is not None else 0
     async with pool.acquire() as conn:
         async with conn.cursor() as cur:
             await cur.execute(
-                "INSERT INTO shared_gear (name, project_id, packed, assigned_member_id) "
-                "VALUES (%s,%s,%s,%s)",
-                (item.name, item.project_id, item.packed, item.taken_by)
+                "INSERT INTO shared_gear (name, project_id, packed, assigned_member_id, weight_g) "
+                "VALUES (%s,%s,%s,%s,%s)",
+                (item.name, item.project_id, item.packed, item.taken_by, weight),
             )
-            return {**item.model_dump(), "id": cur.lastrowid}
+            row_id = cur.lastrowid
+    return {**item.model_dump(), "id": row_id, "weight_g": item.weight_g}
 
 @app.patch("/api/shared_gear/{item_id}", response_model=SharedGear)
 async def patch_shared_gear(item_id: int, patch: SharedGearPatch, pool=Depends(get_db_pool)):
@@ -363,11 +374,13 @@ async def patch_shared_gear(item_id: int, patch: SharedGearPatch, pool=Depends(g
                 raise HTTPException(status_code=400, detail="Brak danych")
             set_clause = ", ".join(f"{k}=%s" for k in data)
             await cur.execute(
-                f"UPDATE shared_gear SET {set_clause} WHERE id=%s", (*data.values(), item_id)
+                f"UPDATE shared_gear SET {set_clause} WHERE id=%s",
+                (*data.values(), item_id),
             )
             await cur.execute(
-                "SELECT id, name, project_id, packed, assigned_member_id AS taken_by "
-                "FROM shared_gear WHERE id=%s", (item_id,)
+                "SELECT id, name, project_id, packed, assigned_member_id AS taken_by, "
+                "NULLIF(weight_g, 0) AS weight_g FROM shared_gear WHERE id=%s",
+                (item_id,),
             )
             return await cur.fetchone()
 

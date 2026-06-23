@@ -1,36 +1,77 @@
-import React from 'react';
+import React from "react";
 
-export default function ConfirmDialog({ 
-  isOpen, 
-  title, 
-  message, 
-  confirmText = "Potwierdź", 
-  cancelText = "Anuluj",
+export default function ConfirmDialog({
+  isOpen,
+  title,
+  message,
+  confirmText = "Potwierdź",
+  cancelText  = "Anuluj",
   isDangerous = false,
-  onConfirm, 
-  onCancel 
+  onConfirm,
+  onCancel,
 }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-lg max-w-sm w-full p-6 animate-fade-in">
-        <h2 className="text-xl font-bold text-zinc-900 mb-2">{title}</h2>
-        <p className="text-zinc-600 mb-6 leading-relaxed">{message}</p>
-        <div className="flex gap-3">
+    <div style={{
+      position: "fixed", inset: 0,
+      background: "rgba(15,35,24,0.45)",
+      backdropFilter: "blur(4px)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      zIndex: 1000, padding: "16px",
+    }}>
+      <div style={{
+        background: "var(--night-raise)",
+        border: "1px solid var(--night-border)",
+        borderRadius: "var(--radius-xl)",
+        padding: "28px",
+        width: "100%", maxWidth: "380px",
+        boxShadow: "var(--shadow-md)",
+        animation: "fadeIn 0.18s ease-out",
+      }}>
+        <h2 style={{
+          fontFamily: "var(--font-display)",
+          fontSize: "18px", fontWeight: 700,
+          color: "var(--snow)", marginBottom: "10px",
+        }}>
+          {title}
+        </h2>
+        <p style={{
+          fontSize: "14px", color: "var(--snow-faint)",
+          lineHeight: 1.6, marginBottom: "24px",
+        }}>
+          {message}
+        </p>
+        <div style={{ display: "flex", gap: "10px" }}>
           <button
             onClick={onCancel}
-            className="flex-1 px-4 py-2.5 rounded-xl border border-zinc-300 text-zinc-700 font-medium hover:bg-zinc-50 transition-colors"
+            style={{
+              flex: 1, padding: "10px",
+              borderRadius: "var(--radius-md)",
+              border: "1px solid var(--night-border)",
+              background: "transparent",
+              color: "var(--snow-dim)",
+              fontFamily: "var(--font-body)", fontSize: "14px", fontWeight: 600,
+              cursor: "pointer", transition: "all 0.15s",
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"}
+            onMouseLeave={e => e.currentTarget.style.background = "transparent"}
           >
             {cancelText}
           </button>
           <button
             onClick={onConfirm}
-            className={`flex-1 px-4 py-2.5 rounded-xl font-medium text-white transition-colors ${
-              isDangerous
-                ? 'bg-rose-600 hover:bg-rose-700 active:bg-rose-800'
-                : 'bg-teal-700 hover:bg-teal-800 active:bg-teal-900'
-            }`}
+            style={{
+              flex: 1, padding: "10px",
+              borderRadius: "var(--radius-md)",
+              border: "none",
+              background: isDangerous ? "var(--danger)" : "var(--aurora)",
+              color: "#ffffff",
+              fontFamily: "var(--font-body)", fontSize: "14px", fontWeight: 700,
+              cursor: "pointer", transition: "opacity 0.15s",
+            }}
+            onMouseEnter={e => e.currentTarget.style.opacity = "0.88"}
+            onMouseLeave={e => e.currentTarget.style.opacity = "1"}
           >
             {confirmText}
           </button>
