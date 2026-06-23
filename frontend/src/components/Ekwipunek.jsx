@@ -1,5 +1,6 @@
 import { useState } from "react";
 // Importowanie wszystkich potrzebnych ikon wektorowych
+import ConfirmDialog from "./ConfirmDialog";  // ✨ NOWY IMPORT
 import { 
   FaTshirt, 
   FaBed, 
@@ -63,6 +64,9 @@ export default function Ekwipunek({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [newSharedItem, setNewSharedItem] = useState("");
 
+  // ✨ NOWY STATE dla potwierdzenia usuwania
+  const [deleteConfirm, setDeleteConfirm] = useState(null);  // { id, name, type }
+
   const profileGear = myGear[activeProfile] || {};
   const catItems    = profileGear[activeCat] || [];
 
@@ -78,6 +82,21 @@ export default function Ekwipunek({
   const suggestions = (CAT_SUGGESTIONS[activeCat] || []).filter(
     s => !catItems.some(i => i.name.toLowerCase() === s.toLowerCase())
   );
+
+  // ✨ NOWY HANDLER dla potwierdzenia usuwania
+  const handleDeleteConfirmed = () => {
+    if (!deleteConfirm) return;
+
+    const { id, type } = deleteConfirm;
+
+    if (type === 'shared_gear') {
+      onDeleteSharedGear(id);
+    } else {
+      onDeleteGear(activeProfile, activeCat, id);
+    }
+
+    setDeleteConfirm(null);
+  };
 
   async function addItem(name) {
     if (!name.trim()) return;
@@ -160,7 +179,13 @@ export default function Ekwipunek({
                 <input type="checkbox" className="gear-checkbox" checked={item.packed}
                   onChange={() => onToggleGear(activeProfile, activeCat, item.id, !item.packed)} />
                 <span className="gear-name">{item.name}</span>
-                <button className="btn btn-ghost btn-sm" onClick={() => onDeleteGear(activeProfile, activeCat, item.id)}>✕</button>
+                {/* ✨ ZMIENIONY: onClick otwiera dialog zamiast usuwać bezpośrednio */}
+                <button 
+                  className="btn btn-ghost btn-sm" 
+                  onClick={() => setDeleteConfirm({ id: item.id, name: item.name, type: 'gear' })}
+                >
+                  ✕
+                </button>
               </li>
             ))}
           </ul>
@@ -243,7 +268,13 @@ export default function Ekwipunek({
                         Biorę
                       </button>
                     )}
-                    <button className="btn btn-ghost btn-sm" onClick={() => onDeleteSharedGear(item.id)}>✕</button>
+                    {/* ✨ ZMIENIONY: onClick otwiera dialog zamiast usuwać bezpośrednio */}
+                    <button 
+                      className="btn btn-ghost btn-sm" 
+                      onClick={() => setDeleteConfirm({ id: item.id, name: item.name, type: 'shared_gear' })}
+                    >
+                      ✕
+                    </button>
                   </div>
                 </li>
               );
@@ -263,6 +294,18 @@ export default function Ekwipunek({
           </button>
         </div>
       </div>
+
+      {/* ✨ NOWY DIALOG dla potwierdzenia usuwania */}
+      <ConfirmDialog
+        isOpen={deleteConfirm !== null}
+        title="Usunąć przedmiot?"
+        message={`Czy na pewno chcesz usunąć "${deleteConfirm?.name}"? Operacja jest nieodwracalna.`}
+        confirmText="Usuń"
+        cancelText="Anuluj"
+        isDangerous={true}
+        onConfirm={handleDeleteConfirmed}
+        onCancel={() => setDeleteConfirm(null)}
+      />
     </div>
   );
 }

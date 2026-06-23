@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import Ekipa      from "./Ekipa";
 import Finanse    from "./Finanse";
 import Ekwipunek  from "./Ekwipunek";
+import DeleteProjectDialog from "./DeleteProjectDialog";  // ✨ NOWY IMPORT
 
 // Nowoczesne ikony SVG
 const ICONS = {
@@ -45,6 +46,9 @@ export default function Dashboard({ project, onBack }) {
   const [gearItems, setGearItems] = useState([]);   
   const [sharedGear, setSharedGear] = useState([]); 
   const [loading, setLoading]     = useState(true);
+
+  // ✨ NOWY STATE dla potwierdzenia usuwania projektu
+  const [deleteProjectConfirm, setDeleteProjectConfirm] = useState(null);
 
   // Bezpieczna normalizacja wydatków (usuwa błąd splitIds is undefined)
   const normalizeExpenses = useCallback((rawExpenses) => {
@@ -210,6 +214,21 @@ export default function Dashboard({ project, onBack }) {
     setSharedGear(prev => prev.filter(i => i.id !== itemId));
   }, []);
 
+  // ✨ NOWY HANDLER dla usuwania projektu
+  const handleDeleteProject = () => {
+    if (!deleteProjectConfirm) return;
+    
+    fetch(`/api/projects/${deleteProjectConfirm.id}`, { method: "DELETE" })
+      .then(() => {
+        setDeleteProjectConfirm(null);
+        onBack();  // Wróć do listy projektów
+      })
+      .catch(err => {
+        console.error('Error deleting project:', err);
+        alert('Błąd przy usuwaniu projektu');
+      });
+  };
+
   const myGear = gearByMemberAndCategory(gearItems);
 
   if (loading) {
@@ -249,9 +268,20 @@ export default function Dashboard({ project, onBack }) {
             ))}
           </nav>
 
-          <button className="btn btn-outline btn-sm back-to-trips-btn" onClick={onBack}>
-            ← Wyprawy
-          </button>
+          {/* ✨ ZMIENIONY: Dodany przycisk usuwania projektu */}
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button 
+              className="btn btn-outline btn-sm" 
+              onClick={() => setDeleteProjectConfirm({ id: project.id, name: project.name })}
+              style={{ color: "#dc2626" }}
+              title="Usuń ten projekt na zawsze"
+            >
+              🗑️ Usuń projekt
+            </button>
+            <button className="btn btn-outline btn-sm back-to-trips-btn" onClick={onBack}>
+              ← Wyprawy
+            </button>
+          </div>
         </div>
       </header>
 
@@ -302,6 +332,14 @@ export default function Dashboard({ project, onBack }) {
           </button>
         ))}
       </nav>
+
+      {/* ✨ NOWY DIALOG dla usuwania projektu */}
+      <DeleteProjectDialog
+        isOpen={deleteProjectConfirm !== null}
+        projectName={deleteProjectConfirm?.name || ''}
+        onConfirm={handleDeleteProject}
+        onCancel={() => setDeleteProjectConfirm(null)}
+      />
     </div>
   );
 }
