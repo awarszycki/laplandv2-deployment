@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ConfirmDialog from './ConfirmDialog';
 
 export default function FinanceManager({ project }) {
   const [expenses, setExpenses] = useState([]);
@@ -7,6 +8,9 @@ export default function FinanceManager({ project }) {
   const [amount, setAmount] = useState('');
   const [paidBy, setPaidBy] = useState('');
   const [editingExpense, setEditingExpense] = useState(null);
+
+  // ✨ Nowe state dla potwierdzenia usuwania
+  const [deleteConfirm, setDeleteConfirm] = useState(null);  // { id, description }
 
   useEffect(() => {
     fetch(`/api/members?project_id=${project.id}`).then(res => res.json()).then(data => setMembers(data));
@@ -35,7 +39,8 @@ export default function FinanceManager({ project }) {
       .then(updated => {
         setExpenses(expenses.map(exp => exp.id === updated.id ? updated : exp));
         clearForm();
-      });
+      })
+      .catch(err => console.error('Error updating expense:', err));
     } else {
       // Tryb tworzenia: POST
       fetch('/api/expenses', {
@@ -47,14 +52,15 @@ export default function FinanceManager({ project }) {
       .then(newExp => {
         setExpenses([...expenses, newExp]);
         clearForm();
-      });
+      })
+      .catch(err => console.error('Error creating expense:', err));
     }
   };
 
   const startEdit = (expense) => {
     setEditingExpense(expense);
     setDescription(expense.description);
-    setAmount(expense.amount);
+    setAmount(expense.amount.toString());  // ✅ BUGFIX: Konwertuj na string
     setPaidBy(expense.paid_by_id);
   };
 
@@ -65,9 +71,19 @@ export default function FinanceManager({ project }) {
     setPaidBy('');
   };
 
-  const handleDelete = (id) => {
-    fetch(`/api/expenses/${id}`, { method: 'DELETE' })
-      .then(() => setExpenses(expenses.filter(e => e.id !== id)));
+  // ✨ Funkcja do potwierdzenia i usunięcia
+  const handleDeleteConfirmed = () => {
+    if (!deleteConfirm) return;
+    
+    fetch(`/api/expenses/${deleteConfirm.id}`, { method: 'DELETE' })
+      .then(() => {
+        setExpenses(expenses.filter(e => e.id !== deleteConfirm.id));
+        setDeleteConfirm(null);
+      })
+      .catch(err => {
+        console.error('Error deleting expense:', err);
+        alert('Błąd przy usuwaniu wydatku');
+      });
   };
 
   return (
@@ -121,8 +137,16 @@ export default function FinanceManager({ project }) {
                   <td className="p-4 text-zinc-700">{e.amount.toFixed(2)} PLN</td>
                   <td className="p-4 text-zinc-600">{payer ? payer.name : 'Nieznany'}</td>
                   <td className="p-4 text-right space-x-2">
-                    <button onClick={() => startEdit(e)} className="text-teal-700 hover:text-teal-950 font-medium">Edytuj</button>
-                    <button onClick={() => handleDelete(e.id)} className="text-rose-600 hover:text-rose-800 font-medium">Usuń</button>
+                    <button onClick={() => startEdit(e)} className="text-teal-700 hover:text-teal-950 font-medium">
+                      Edytuj
+                    </button>
+                    {/* ✨ Zmieniono: zamiast delete, otwieramy dialog potwierdzenia */}
+                    <button 
+                      onClick={() => setDeleteConfirm({ id: e.id, description: e.description })}
+                      className="text-rose-600 hover:text-rose-800 font-medium"
+                    >
+                      Usuń
+                    </button>
                   </td>
                 </tr>
               );
@@ -130,6 +154,18 @@ export default function FinanceManager({ project }) {
           </tbody>
         </table>
       </div>
+
+      {/* ✨ Dialog potwierdzenia usunięcia wydatku */}
+      <ConfirmDialog
+        isOpen={deleteConfirm !== null}
+        title="Usunąć wydatek?"
+        message={`Czy na pewno chcesz usunąć wydatek "${deleteConfirm?.description}"? Operacja jest nieodwracalna.`}
+        confirmText="Usuń"
+        cancelText="Anuluj"
+        isDangerous={true}
+        onConfirm={handleDeleteConfirmed}
+        onCancel={() => setDeleteConfirm(null)}
+      />
     </div>
   );
 }
