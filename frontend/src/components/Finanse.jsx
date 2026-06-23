@@ -8,23 +8,30 @@ function initials(name) { return name.slice(0, 2).toUpperCase(); }
 
 export default function Finanse({ members, expenses, currentUser, onAddExpense, onUpdateExpense, onDeleteExpense }) {
   const [editingId, setEditingId] = useState(null);
+  
+  // ✅ NAPRAWIONO: payerId zawsze string, nigdy null
   const [form, setForm] = useState({
     title: "",
     amount: "",
     currency: "PLN",
-    payerId: currentUser?.id || members[0]?.id || null,
+    payerId: members.length > 0 ? members[0].id.toString() : "",
     splitIds: members.map(m => m.id),
   });
+  
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // ✨ NOWY STATE dla potwierdzenia usuwania
   const [deleteConfirm, setDeleteConfirm] = useState(null);  // { id, title }
 
-  // Aktualizacja domyślnego płatnika w formularzu, gdy załadują się członkowie
+  // ✅ NAPRAWIONO: useEffect - payerId zawsze string
   useEffect(() => {
     if (members.length > 0 && !form.payerId) {
-      setForm(f => ({ ...f, payerId: members[0].id, splitIds: members.map(m => m.id) }));
+      setForm(f => ({ 
+        ...f, 
+        payerId: members[0].id.toString(), 
+        splitIds: members.map(m => m.id) 
+      }));
     }
   }, [members, form.payerId]);
 
@@ -43,17 +50,12 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
 
   function startEdit(e) {
     setEditingId(e.id);
-    // BUGFIX: Poprawnie ładuj original_amount na podstawie waluty
-    // Jeśli waluta to EUR, original_amount powinien być kwotą w EUR
-    // Jeśli waluta to PLN, może być null (wtedy amount jest równy original_amount)
-    let loadAmount = e.amount; // domyślnie ładuj kwotę w PLN
+    let loadAmount = e.amount;
     const currency = e.currency || "PLN";
     
     if (currency === "EUR" && e.original_amount) {
-      // Jeśli jest EUR, original_amount powinien zawierać wartość w EUR
       loadAmount = e.original_amount;
     } else if (currency === "PLN" && e.original_amount) {
-      // Dla PLN, original_amount = amount
       loadAmount = e.original_amount;
     }
     
@@ -61,7 +63,7 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
       title: e.title,
       amount: loadAmount,
       currency: currency,
-      payerId: e.payerId,
+      payerId: e.payerId.toString(),  // ✅ NAPRAWIONO: konwertuj na string
       splitIds: e.splitIds && e.splitIds.length > 0 ? e.splitIds : members.map(m => m.id),
     });
     setShowForm(true);
@@ -74,7 +76,7 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
       title: "",
       amount: "",
       currency: "PLN",
-      payerId: currentUser?.id || members[0]?.id || null,
+      payerId: members.length > 0 ? members[0].id.toString() : "",  // ✅ NAPRAWIONO
       splitIds: members.map(m => m.id),
     });
     setShowForm(false);
@@ -84,11 +86,9 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
     if (!form.title.trim() || !form.amount || form.splitIds.length === 0 || !form.payerId) return;
     setSaving(true);
     
-    // BUGFIX: Solidna obsługa liczb - zaokrąglenie do 2 miejsc po przecinku
     const originalAmount = Math.round(parseFloat(form.amount) * 100) / 100;
     const convertedAmount = Math.round(amountPLN * 100) / 100;
     
-    // Dodatkowa walidacja - jeśli kwota to 0 lub NaN, nie zapisuj
     if (isNaN(originalAmount) || originalAmount <= 0) {
       setSaving(false);
       alert("Kwota musi być większa od 0");
@@ -100,7 +100,7 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
       amount: convertedAmount,
       originalAmount: originalAmount,
       currency: form.currency,
-      payerId: parseInt(form.payerId),
+      payerId: parseInt(form.payerId),  // ✅ Konwertuj string na int
       splitIds: form.splitIds.map(id => parseInt(id)),
     };
 
@@ -115,7 +115,7 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
       title: "",
       amount: "",
       currency: "PLN",
-      payerId: currentUser?.id || members[0]?.id || null,
+      payerId: members.length > 0 ? members[0].id.toString() : "",  // ✅ NAPRAWIONO
       splitIds: members.map(m => m.id),
     });
     setShowForm(false);
@@ -266,8 +266,8 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
                 {members.map(m => (
                   <button key={m.id}
                     type="button"
-                    className={`payer-btn ${parseInt(form.payerId) === m.id ? "active" : ""}`}
-                    onClick={() => setForm(f => ({ ...f, payerId: m.id }))}>
+                    className={`payer-btn ${form.payerId === m.id.toString() ? "active" : ""}`}
+                    onClick={() => setForm(f => ({ ...f, payerId: m.id.toString() }))}>
                     <div className="avatar avatar-sm" style={{ background: getAvatarColor(m.id) }}>
                       {initials(m.name)}
                     </div>
