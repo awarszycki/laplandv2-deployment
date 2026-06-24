@@ -7,156 +7,6 @@ const COLORS = ["#00c896", "#f0a500", "#4ca0e0", "#e05555", "#a78bfa", "#fb923c"
 function getAvatarColor(id) { return COLORS[(id - 1) % COLORS.length]; }
 function initials(name) { return name.slice(0, 2).toUpperCase(); }
 
-const S = {
-  balanceGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))",
-    gap: "12px",
-  },
-  balanceItem: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "8px",
-    padding: "16px 10px",
-    borderRadius: "12px",
-    background: "rgba(255,255,255,0.03)",
-    border: "1px solid rgba(255,255,255,0.08)",
-    textAlign: "center",
-  },
-  balanceName: { fontSize: "13px", opacity: 0.8, fontWeight: 500 },
-  balanceValue: { fontSize: "16px", fontWeight: 700 },
-  avatar: (color) => ({
-    width: "42px",
-    height: "42px",
-    borderRadius: "50%",
-    background: color,
-    color: "#0b0f14",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontWeight: 700,
-    fontSize: "15px",
-    flexShrink: 0,
-  }),
-  transferList: { display: "flex", flexDirection: "column", gap: "8px" },
-  transferRow: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: "10px",
-    padding: "10px 14px",
-    borderRadius: "10px",
-    background: "rgba(255,255,255,0.03)",
-    border: "1px solid rgba(255,255,255,0.07)",
-  },
-  transferAmount: {
-    fontWeight: 700,
-    color: "#00c896",
-    whiteSpace: "nowrap",
-  },
-  cardHeader: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: "10px",
-    marginBottom: "14px",
-  },
-  expenseList: { display: "flex", flexDirection: "column", gap: "8px" },
-  expenseRow: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: "12px",
-    padding: "12px 14px",
-    borderRadius: "10px",
-    background: "rgba(255,255,255,0.03)",
-    border: "1px solid rgba(255,255,255,0.07)",
-  },
-  expenseTitle: { fontWeight: 600, fontSize: "15px" },
-  expenseMeta: { fontSize: "12px", opacity: 0.6, marginTop: "2px" },
-  expenseAmount: { fontWeight: 700, fontSize: "15px", whiteSpace: "nowrap" },
-  expenseActions: { display: "flex", gap: "6px", flexShrink: 0 },
-  iconBtn: {
-    background: "rgba(255,255,255,0.05)",
-    border: "1px solid rgba(255,255,255,0.1)",
-    borderRadius: "8px",
-    padding: "6px 9px",
-    cursor: "pointer",
-    fontSize: "14px",
-    lineHeight: 1,
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "14px",
-    padding: "16px",
-    borderRadius: "12px",
-    background: "rgba(255,255,255,0.02)",
-    border: "1px solid rgba(255,255,255,0.08)",
-    marginBottom: "16px",
-  },
-  label: { fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.04em", opacity: 0.6, marginBottom: "6px", display: "block" },
-  input: {
-    width: "100%",
-    padding: "10px 12px",
-    borderRadius: "8px",
-    background: "rgba(0,0,0,0.25)",
-    border: "1px solid rgba(255,255,255,0.12)",
-    color: "inherit",
-    fontSize: "14px",
-    boxSizing: "border-box",
-  },
-  amountRow: { display: "flex", gap: "10px" },
-  pillWrap: { display: "flex", flexWrap: "wrap", gap: "8px" },
-  pill: (active, color) => ({
-    padding: "7px 14px",
-    borderRadius: "999px",
-    border: `1px solid ${active ? (color || "#00c896") : "rgba(255,255,255,0.15)"}`,
-    background: active ? (color || "#00c896") : "transparent",
-    color: active ? "#0b0f14" : "inherit",
-    fontWeight: active ? 700 : 500,
-    fontSize: "13px",
-    cursor: "pointer",
-    transition: "all 0.12s ease",
-  }),
-  formActions: { display: "flex", gap: "10px", marginTop: "4px" },
-  primaryBtn: {
-    flex: 1,
-    padding: "11px",
-    borderRadius: "8px",
-    border: "none",
-    background: "#00c896",
-    color: "#0b0f14",
-    fontWeight: 700,
-    fontSize: "14px",
-    cursor: "pointer",
-  },
-  ghostBtn: {
-    flex: 1,
-    padding: "11px",
-    borderRadius: "8px",
-    border: "1px solid rgba(255,255,255,0.15)",
-    background: "transparent",
-    color: "inherit",
-    fontWeight: 600,
-    fontSize: "14px",
-    cursor: "pointer",
-  },
-  addBtn: {
-    padding: "9px 16px",
-    borderRadius: "8px",
-    border: "none",
-    background: "#00c896",
-    color: "#0b0f14",
-    fontWeight: 700,
-    fontSize: "14px",
-    cursor: "pointer",
-  },
-  empty: { padding: "20px", textAlign: "center", opacity: 0.5, fontSize: "14px" },
-  preview: { fontSize: "12px", opacity: 0.6, marginTop: "6px" },
-};
-
 export default function Finanse({ members, expenses, currentUser, onAddExpense, onUpdateExpense, onDeleteExpense }) {
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({
@@ -185,6 +35,16 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
     }));
   }
 
+  function resetForm() {
+    setForm({
+      title: "",
+      amount: "",
+      currency: "PLN",
+      payerId: members.length > 0 ? members[0].id.toString() : "",
+      splitIds: members.map(m => m.id),
+    });
+  }
+
   function startEdit(e) {
     setEditingId(e.id);
     let loadAmount = e.amount;
@@ -202,13 +62,7 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
 
   function cancelEdit() {
     setEditingId(null);
-    setForm({
-      title: "",
-      amount: "",
-      currency: "PLN",
-      payerId: members.length > 0 ? members[0].id.toString() : "",
-      splitIds: members.map(m => m.id),
-    });
+    resetForm();
     setShowForm(false);
   }
 
@@ -233,13 +87,7 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
     if (editingId) await onUpdateExpense(editingId, expenseData);
     else await onAddExpense(expenseData);
     setEditingId(null);
-    setForm({
-      title: "",
-      amount: "",
-      currency: "PLN",
-      payerId: members.length > 0 ? members[0].id.toString() : "",
-      splitIds: members.map(m => m.id),
-    });
+    resetForm();
     setShowForm(false);
     setSaving(false);
   }
@@ -281,75 +129,93 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
   }, [balances, members]);
 
   const getName = id => members.find(m => m.id === id)?.name || "?";
+  const canSave = form.title.trim() && form.amount && form.splitIds.length > 0 && form.payerId && !saving;
 
   return (
-    <div className="finanse-container">
+    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+
       {/* === BILANS === */}
       <div className="card">
-        <div className="card-title">💰 Bilans</div>
-        <div style={S.balanceGrid}>
-          {members.map(m => {
-            const b = balances[m.id] || 0;
-            const color = b > 0.01 ? "#34d399" : b < -0.01 ? "#e05555" : "rgba(255,255,255,0.5)";
-            return (
-              <div key={m.id} style={S.balanceItem}>
-                <div style={S.avatar(getAvatarColor(m.id))}>{initials(m.name)}</div>
-                <div style={S.balanceName}>{m.name}</div>
-                <div style={{ ...S.balanceValue, color }}>{b.toFixed(2)} zł</div>
-              </div>
-            );
-          })}
-        </div>
+        <div className="card-title"><span>💰</span> Bilans</div>
+        {members.length === 0 ? (
+          <div className="empty-state">Najpierw dodaj uczestników w zakładce Ekipa</div>
+        ) : (
+          <div className="balance-grid">
+            {members.map(m => {
+              const b = balances[m.id] || 0;
+              const cls = b > 0.01 ? "plus" : b < -0.01 ? "minus" : "zero";
+              return (
+                <div key={m.id} className="balance-item">
+                  <div className="avatar avatar-lg" style={{ background: getAvatarColor(m.id), margin: "0 auto 8px" }}>
+                    {initials(m.name)}
+                  </div>
+                  <div className="balance-name">{m.name}</div>
+                  <div className={`balance-amount ${cls}`}>{b.toFixed(2)} zł</div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* === PRZELEWY === */}
       {transfers.length > 0 && (
         <div className="card">
-          <div className="card-title">→ Przelewy</div>
-          <div style={S.transferList}>
+          <div className="card-title"><span>→</span> Przelewy</div>
+          <ul className="transfer-list">
             {transfers.map((t, i) => (
-              <div key={i} style={S.transferRow}>
-                <span>
-                  <strong>{t.from}</strong> <span style={{ opacity: 0.5 }}>→</span> <strong>{t.to}</strong>
-                </span>
-                <span style={S.transferAmount}>{t.amount.toFixed(2)} zł</span>
-              </div>
+              <li key={i} className="transfer-item">
+                <strong>{t.from}</strong>
+                <span className="transfer-arrow">→</span>
+                <strong>{t.to}</strong>
+                <span className="transfer-amount">{t.amount.toFixed(2)} zł</span>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       )}
 
       {/* === WYDATKI === */}
       <div className="card">
-        <div style={S.cardHeader}>
-          <div className="card-title" style={{ margin: 0 }}>Wydatki ({expenses.length})</div>
-          {!showForm && <button style={S.addBtn} onClick={() => setShowForm(true)}>+ Dodaj</button>}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", marginBottom: "4px" }}>
+          <div className="card-title" style={{ margin: 0, paddingBottom: 0, border: "none" }}>
+            <span>🧾</span> Wydatki ({expenses.length})
+          </div>
+          {!showForm && (
+            <button className="btn btn-primary btn-sm" onClick={() => setShowForm(true)} disabled={members.length === 0}>
+              + Dodaj
+            </button>
+          )}
         </div>
 
         {showForm && (
-          <div style={S.form}>
-            <div>
-              <label style={S.label}>Tytuł</label>
+          <div className="add-form">
+            <div className="add-form-title">{editingId ? "Edytuj wydatek" : "Nowy wydatek"}</div>
+
+            <div className="form-group">
+              <label className="form-label">Tytuł</label>
               <input
-                style={S.input}
+                type="text"
                 value={form.title}
                 onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
                 placeholder="np. Paliwo, jedzenie, schronisko"
+                autoFocus
               />
             </div>
 
-            <div>
-              <label style={S.label}>Kwota</label>
-              <div style={S.amountRow}>
+            <div className="form-group">
+              <label className="form-label">Kwota</label>
+              <div className="input-row">
                 <input
-                  style={{ ...S.input, flex: 1 }}
                   type="number"
                   value={form.amount}
                   onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
                   placeholder="0.00"
+                  min="0"
+                  step="0.01"
                 />
                 <select
-                  style={{ ...S.input, width: "90px", flex: "0 0 auto" }}
+                  style={{ flex: "0 0 92px" }}
                   value={form.currency}
                   onChange={e => setForm(f => ({ ...f, currency: e.target.value }))}
                 >
@@ -358,32 +224,37 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
                 </select>
               </div>
               {form.currency === "EUR" && form.amount && (
-                <div style={S.preview}>≈ {amountPLN.toFixed(2)} zł (kurs {EUR_TO_PLN})</div>
+                <div style={{ fontSize: "12px", color: "var(--snow-faint)", marginTop: "6px", fontFamily: "var(--font-mono)" }}>
+                  ≈ {amountPLN.toFixed(2)} zł (kurs {EUR_TO_PLN})
+                </div>
               )}
             </div>
 
-            <div>
-              <label style={S.label}>Zapłacił(a)</label>
-              <div style={S.pillWrap}>
+            <div className="form-group">
+              <label className="form-label">Zapłacił(a)</label>
+              <div className="payer-select-wrap">
                 {members.map(m => (
                   <button
                     key={m.id}
-                    style={S.pill(form.payerId === m.id.toString())}
+                    type="button"
+                    className={`payer-btn ${form.payerId === m.id.toString() ? "active" : ""}`}
                     onClick={() => setForm(f => ({ ...f, payerId: m.id.toString() }))}
                   >
+                    <span className="avatar avatar-sm" style={{ background: getAvatarColor(m.id) }}>{initials(m.name)}</span>
                     {m.name}
                   </button>
                 ))}
               </div>
             </div>
 
-            <div>
-              <label style={S.label}>Dzielone na</label>
-              <div style={S.pillWrap}>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label">Dzielone na</label>
+              <div className="person-tiles" style={{ marginTop: 0 }}>
                 {members.map(m => (
                   <button
                     key={m.id}
-                    style={S.pill(form.splitIds.includes(m.id))}
+                    type="button"
+                    className={`person-tile ${form.splitIds.includes(m.id) ? "selected" : ""}`}
                     onClick={() => toggleSplit(m.id)}
                   >
                     {m.name}
@@ -392,42 +263,61 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
               </div>
             </div>
 
-            <div style={S.formActions}>
-              <button style={S.primaryBtn} onClick={saveExpense} disabled={!form.payerId || saving}>
-                {saving ? "Zapisywanie…" : "Zapisz"}
+            <div style={{ display: "flex", gap: "8px", marginTop: "16px" }}>
+              <button className="btn btn-primary" style={{ flex: 1, justifyContent: "center" }} onClick={saveExpense} disabled={!canSave}>
+                {saving ? "Zapisywanie…" : editingId ? "Zapisz zmiany" : "Dodaj wydatek"}
               </button>
-              <button style={S.ghostBtn} onClick={cancelEdit}>Anuluj</button>
+              <button className="btn btn-outline" onClick={cancelEdit}>Anuluj</button>
             </div>
           </div>
         )}
 
-        <div style={S.expenseList}>
-          {expenses.length === 0 && <div style={S.empty}>Brak wydatków</div>}
+        <ul className="expense-list" style={{ marginTop: showForm ? "16px" : "0" }}>
+          {expenses.length === 0 && !showForm && (
+            <div className="empty-state">
+              <div className="empty-icon">🧾</div>
+              <div>Brak wydatków — dodaj pierwszy</div>
+            </div>
+          )}
           {expenses.map(e => (
-            <div key={e.id} style={S.expenseRow}>
-              <div style={{ minWidth: 0 }}>
-                <div style={S.expenseTitle}>{e.title}</div>
-                <div style={S.expenseMeta}>
+            <li key={e.id} className="expense-item">
+              <div className="avatar" style={{ background: getAvatarColor(e.payerId), marginTop: "2px" }}>
+                {initials(getName(e.payerId))}
+              </div>
+              <div className="expense-info">
+                <div className="expense-title">{e.title}</div>
+                <div className="expense-meta">
                   zapłacił(a) {getName(e.payerId)}
+                  {e.splitIds?.length > 0 ? ` · dzielone na ${e.splitIds.length}` : ""}
                   {e.currency === "EUR" && e.original_amount ? ` · ${e.original_amount.toFixed(2)} €` : ""}
                 </div>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <span style={S.expenseAmount}>{e.amount.toFixed(2)} zł</span>
-                <div style={S.expenseActions}>
-                  <button style={S.iconBtn} onClick={() => startEdit(e)}>✏️</button>
-                  <button style={S.iconBtn} onClick={() => setDeleteConfirm({ id: e.id, title: e.title })}>🗑️</button>
+              <div className="expense-end-block">
+                <span className="expense-amount">{e.amount.toFixed(2)} zł</span>
+                <div className="expense-actions-row">
+                  <button className="btn-icon-action btn-edit-icon" onClick={() => startEdit(e)} title="Edytuj">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                  <button className="btn-icon-action btn-delete-icon" onClick={() => setDeleteConfirm({ id: e.id, title: e.title })} title="Usuń">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
                 </div>
               </div>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
 
       <ConfirmDialog
         isOpen={deleteConfirm !== null}
-        title="Usunąć?"
-        message={`Usunąć "${deleteConfirm?.title}"?`}
+        title="Usunąć wydatek?"
+        message={`Czy na pewno chcesz usunąć „${deleteConfirm?.title}"? Operacja jest nieodwracalna.`}
         confirmText="Usuń"
         cancelText="Anuluj"
         isDangerous={true}
