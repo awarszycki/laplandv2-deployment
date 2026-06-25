@@ -47,15 +47,15 @@ export default function Ekipa({ members, expenses, myGear, currentUser, onAddMem
       {/* Podsumowanie */}
       <div className="card">
         {/* Zmieniono emoji 📊 na ikonę LuLayoutDashboard */}
-        <div className="card-title" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <LuLayoutDashboard size={20} /> Podsumowanie wyprawy
+        <div className="card-title">
+          <span><LuLayoutDashboard size={16} /></span> Podsumowanie wyprawy
         </div>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:"10px" }}>
           {[
             // Zmieniono emoji na gotowe komponenty React Icons
-            { label:"Uczestników", value: members.length, icon: <LuUsers size={24} color="#4ca0e0" /> },
-            { label:"Wydatków",    value: expenses.length, icon: <LuReceipt size={24} color="#f0a500" /> },
-            { label:"Łącznie",     value: totalSpent.toFixed(2) + " zł", icon: <LuCoins size={24} color="#00c896" /> },
+            { label:"Uczestników", value: members.length, icon: <LuUsers size={24} color="var(--ice)" /> },
+            { label:"Wydatków",    value: expenses.length, icon: <LuReceipt size={24} color="var(--amber)" /> },
+            { label:"Łącznie",     value: totalSpent.toFixed(2) + " zł", icon: <LuCoins size={24} color="var(--aurora)" /> },
           ].map(stat => (
             <div key={stat.label} className="balance-item" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
               <div style={{ marginBottom:"6px", display: "flex", alignItems: "center" }}>{stat.icon}</div>
@@ -69,8 +69,8 @@ export default function Ekipa({ members, expenses, myGear, currentUser, onAddMem
       {/* Lista uczestników */}
       <div className="card">
         {/* Zmieniono emoji ⚔️ na ikonę LuSwords */}
-        <div className="card-title" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <LuSwords size={20} /> Ekipa ({members.length} os.)
+        <div className="card-title">
+          <span><LuSwords size={16} /></span> Ekipa ({members.length} os.)
         </div>
 
         <ul className="member-list">

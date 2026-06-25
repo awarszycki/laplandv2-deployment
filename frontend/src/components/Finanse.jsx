@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { LuWallet, LuArrowLeftRight, LuArrowRight, LuReceipt } from "react-icons/lu";
 import ConfirmDialog from "./ConfirmDialog";
 
 const EUR_TO_PLN = 4.35;
@@ -136,7 +137,7 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
 
       {/* === BILANS === */}
       <div className="card">
-        <div className="card-title"><span>💰</span> Bilans</div>
+        <div className="card-title"><span><LuWallet size={16} /></span> Bilans</div>
         {members.length === 0 ? (
           <div className="empty-state">Najpierw dodaj uczestników w zakładce Ekipa</div>
         ) : (
@@ -161,12 +162,12 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
       {/* === PRZELEWY === */}
       {transfers.length > 0 && (
         <div className="card">
-          <div className="card-title"><span>→</span> Przelewy</div>
+          <div className="card-title"><span><LuArrowLeftRight size={16} /></span> Przelewy</div>
           <ul className="transfer-list">
             {transfers.map((t, i) => (
               <li key={i} className="transfer-item">
                 <strong>{t.from}</strong>
-                <span className="transfer-arrow">→</span>
+                <span className="transfer-arrow"><LuArrowRight size={15} /></span>
                 <strong>{t.to}</strong>
                 <span className="transfer-amount">{t.amount.toFixed(2)} zł</span>
               </li>
@@ -179,7 +180,7 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
       <div className="card">
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", marginBottom: "4px" }}>
           <div className="card-title" style={{ margin: 0, paddingBottom: 0, border: "none" }}>
-            <span>🧾</span> Wydatki ({expenses.length})
+            <span><LuReceipt size={16} /></span> Wydatki ({expenses.length})
           </div>
           {!showForm && (
             <button className="btn btn-primary btn-sm" onClick={() => setShowForm(true)} disabled={members.length === 0}>
@@ -275,7 +276,7 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
         <ul className="expense-list" style={{ marginTop: showForm ? "16px" : "0" }}>
           {expenses.length === 0 && !showForm && (
             <div className="empty-state">
-              <div className="empty-icon">🧾</div>
+              <div className="empty-icon"><LuReceipt size={30} /></div>
               <div>Brak wydatków — dodaj pierwszy</div>
             </div>
           )}

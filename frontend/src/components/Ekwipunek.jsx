@@ -1,23 +1,23 @@
 import { useState } from "react";
 import ConfirmDialog from "./ConfirmDialog";
 import {
-  FaTshirt, FaBed, FaUtensils, FaCompass,
-  FaBatteryFull, FaPumpSoap, FaSuitcase, FaFileAlt,
-  FaHandshake, FaBoxOpen,
-} from "react-icons/fa";
+  LuShirt, LuTent, LuUtensils, LuCompass,
+  LuBatteryFull, LuDroplets, LuLuggage, LuFileText,
+  LuHandshake, LuPackageOpen, LuBackpack, LuUsers, LuScale,
+} from "react-icons/lu";
 
 const COLORS = ["#00c896","#f0a500","#4ca0e0","#e05555","#a78bfa","#fb923c","#34d399","#60a5fa"];
 function getAvatarColor(id) { return COLORS[(id - 1) % COLORS.length]; }
 
 export const CATEGORIES = [
-  { id: "clothing",    label: "Odzież",      icon: <FaTshirt /> },
-  { id: "camp",        label: "Biwak",       icon: <FaBed /> },
-  { id: "food",        label: "Jedzenie",    icon: <FaUtensils /> },
-  { id: "nav",         label: "Nawigacja",   icon: <FaCompass /> },
-  { id: "electronics", label: "Elektronika", icon: <FaBatteryFull /> },
-  { id: "hygiene",     label: "Higiena",     icon: <FaPumpSoap /> },
-  { id: "bag",         label: "Bagaż",       icon: <FaSuitcase /> },
-  { id: "docs",        label: "Dokumenty",   icon: <FaFileAlt /> },
+  { id: "clothing",    label: "Odzież",      icon: <LuShirt /> },
+  { id: "camp",        label: "Biwak",       icon: <LuTent /> },
+  { id: "food",        label: "Jedzenie",    icon: <LuUtensils /> },
+  { id: "nav",         label: "Nawigacja",   icon: <LuCompass /> },
+  { id: "electronics", label: "Elektronika", icon: <LuBatteryFull /> },
+  { id: "hygiene",     label: "Higiena",     icon: <LuDroplets /> },
+  { id: "bag",         label: "Bagaż",       icon: <LuLuggage /> },
+  { id: "docs",        label: "Dokumenty",   icon: <LuFileText /> },
 ];
 
 const CAT_SUGGESTIONS = {
@@ -66,7 +66,7 @@ function WeightBadge({ weightG, label }) {
       borderRadius: "999px",
       padding: "2px 10px",
     }}>
-      ⚖ {label}: {gToKg(weightG)} kg
+      <LuScale size={13} /> {label}: {gToKg(weightG)} kg
     </span>
   );
 }
@@ -196,13 +196,13 @@ export default function Ekwipunek({
             paddingTop: "10px", borderTop: "1px solid var(--night-border)",
           }}>
             {personalWeightG > 0 && (
-              <span style={{ fontSize: "11px", color: "var(--snow-faint)", fontFamily: "var(--font-mono)" }}>
-                🎒 Osobisty: <strong style={{ color: "var(--snow-dim)" }}>{gToKg(personalWeightG)} kg</strong>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", fontSize: "11px", color: "var(--snow-faint)", fontFamily: "var(--font-mono)" }}>
+                <LuBackpack size={13} /> Osobisty: <strong style={{ color: "var(--snow-dim)" }}>{gToKg(personalWeightG)} kg</strong>
               </span>
             )}
             {sharedWeightG > 0 && (
-              <span style={{ fontSize: "11px", color: "var(--snow-faint)", fontFamily: "var(--font-mono)" }}>
-                🤝 Wspólny: <strong style={{ color: "var(--ice)" }}>{gToKg(sharedWeightG)} kg</strong>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", fontSize: "11px", color: "var(--snow-faint)", fontFamily: "var(--font-mono)" }}>
+                <LuUsers size={13} /> Wspólny: <strong style={{ color: "var(--ice)" }}>{gToKg(sharedWeightG)} kg</strong>
               </span>
             )}
           </div>
@@ -345,7 +345,7 @@ export default function Ekwipunek({
       {/* ── Ekwipunek wspólny ── */}
       <div className="card">
         <div className="card-title">
-          <span style={{ display: "inline-flex", alignItems: "center", marginRight: "6px" }}><FaHandshake /></span>
+          <span style={{ display: "inline-flex", alignItems: "center", marginRight: "6px" }}><LuHandshake /></span>
           Wspólna lista
           {sharedGear.length > 0 && (
             <span style={{ marginLeft: "auto", fontSize: "11px", fontFamily: "var(--font-display)", color: "var(--snow-faint)" }}>
@@ -370,7 +370,7 @@ export default function Ekwipunek({
 
         {sharedGear.length === 0 ? (
           <div className="empty-state" style={{ padding: "14px 0" }}>
-            <div className="empty-icon" style={{ display: "inline-flex", justifyContent: "center" }}><FaBoxOpen /></div>
+            <div className="empty-icon" style={{ display: "inline-flex", justifyContent: "center" }}><LuPackageOpen /></div>
             <div>Brak pozycji</div>
           </div>
         ) : (
