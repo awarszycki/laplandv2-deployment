@@ -2,11 +2,14 @@ services:
   lapland_backend:
     build: ./backend
     container_name: lapland_backend
-    privileged: true
-    security_opt:
-      - seccomp:unconfined
-    ports:
-      - "8000:8000"
+    restart: unless-stopped
+    # USUNIĘTE: privileged / seccopm:unconfined — backend tego nie potrzebuje,
+    # a dawało to kontenerowi praktycznie roota na hoście.
+    # USUNIĘTE: ports "8000:8000" — backend jest osiągalny tylko dla Caddy
+    # przez wewnętrzną sieć Dockera (lapland_backend:8000). Nie ma go już na świecie.
+    # Gdybyś chciał lokalny dostęp do debugowania, odkomentuj TYLKO localhost:
+    # ports:
+    #   - "127.0.0.1:8000:8000"
     environment:
       - DB_HOST=lapland_db
       - DB_PORT=3306
@@ -19,6 +22,8 @@ services:
   lapland_frontend:
     build: ./frontend
     container_name: lapland_frontend
+    restart: unless-stopped
+    # Frontend (Caddy) to jedyny punkt wejścia wystawiony na zewnątrz.
     ports:
       - "3030:80"
     depends_on:
@@ -33,16 +38,12 @@ services:
       - MYSQL_DATABASE=lapland
       - MYSQL_USER=lapland
       - MYSQL_PASSWORD=lapland_pass
-    ports:
-      - "3306:3306"
+    # USUNIĘTE: ports "3306:3306" — baza NIE jest już wystawiona na internet.
+    # Backend łączy się z nią po wewnętrznej sieci Dockera (lapland_db:3306).
+    # Migracje nadal działają przez: docker exec -i lapland_db mariadb ...
     volumes:
       - mariadb_data:/var/lib/mysql
       - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
 
-  
-
 volumes:
   mariadb_data:
-
-
-

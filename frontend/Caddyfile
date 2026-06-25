@@ -2,22 +2,29 @@
     root * /srv
     encode gzip
 
-    # 1. Przekieruj API do backendu (zachowaj /api prefix)
+    # ── Bramka hasłem dla całej aplikacji ──
+    # Jedno wspólne hasło. Wpisujesz raz, przeglądarka pamięta.
+    # Hash wygenerujesz komendą (patrz instrukcja), wklej go poniżej.
+    basic_auth {
+        $2a$14$6j1YbN70isp1JnZM/ULVHO..WAz1VrhJxhSZsjOxv0XJBhg06vI/K
+    }
+
+    # 1. API → backend (zachowaj /api prefix)
     handle /api/* {
         reverse_proxy lapland_backend:8000
     }
 
-    # 2. Przekieruj Healthcheck do backendu
+    # 2. Healthcheck → backend
     handle /health {
         reverse_proxy lapland_backend:8000
     }
 
-    # 3. Pliki statyczne (JS, CSS, assets)
+    # 3. Pliki statyczne
     handle /assets/* {
         file_server
     }
 
-    # 4. SPA routing — wszystko inne → index.html
+    # 4. SPA routing — reszta → index.html
     handle {
         try_files {path} /index.html
         file_server
