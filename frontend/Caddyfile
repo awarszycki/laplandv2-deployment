@@ -6,7 +6,7 @@
     # Jedno wspólne hasło. Wpisujesz raz, przeglądarka pamięta.
     # Hash wygenerujesz komendą (patrz instrukcja), wklej go poniżej.
     basic_auth {
-        $2a$14$6j1YbN70isp1JnZM/ULVHO..WAz1VrhJxhSZsjOxv0XJBhg06vI/K
+        ekipa $2a$14$6j1YbN70isp1JnZM/ULVHO..WAz1VrhJxhSZsjOxv0XJBhg06vI/K
     }
 
     # 1. API → backend (zachowaj /api prefix)
