@@ -4,6 +4,7 @@ import {
   LuShirt, LuTent, LuUtensils, LuCompass,
   LuBatteryFull, LuDroplets, LuLuggage, LuFileText,
   LuHandshake, LuPackageOpen, LuBackpack, LuUsers, LuScale,
+  LuPencil, LuCheck, LuX,
 } from "react-icons/lu";
 
 const COLORS = ["#00c896","#f0a500","#4ca0e0","#e05555","#a78bfa","#fb923c","#34d399","#60a5fa"];
@@ -73,7 +74,7 @@ function WeightBadge({ weightG, label }) {
 
 export default function Ekwipunek({
   members, myGear, sharedGear, currentUser,
-  onAddGear, onToggleGear, onDeleteGear,
+  onAddGear, onToggleGear, onDeleteGear, onPatchGear,
   onAddSharedGear, onPatchSharedGear, onDeleteSharedGear,
 }) {
   const [activeProfile, setActiveProfile]   = useState(currentUser?.id || members[0]?.id || null);
@@ -84,6 +85,9 @@ export default function Ekwipunek({
   const [newSharedItem, setNewSharedItem]   = useState("");
   const [newSharedWeight, setNewSharedWeight] = useState(""); // waga dla wspólnego
   const [deleteConfirm, setDeleteConfirm]   = useState(null); // { id, name, type }
+  const [editingId, setEditingId]           = useState(null); // id edytowanej pozycji
+  const [editName, setEditName]             = useState("");
+  const [editWeight, setEditWeight]         = useState("");
 
   const profileGear = myGear[activeProfile] || {};
   const catItems    = profileGear[activeCat] || [];
@@ -131,6 +135,28 @@ export default function Ekwipunek({
     setNewItem("");
     setNewItemWeight("");
     setShowSuggestions(false);
+  }
+
+  function startEditGear(item) {
+    setEditingId(item.id);
+    setEditName(item.name);
+    setEditWeight(item.weight_g > 0 ? String(item.weight_g) : "");
+  }
+
+  function cancelEditGear() {
+    setEditingId(null);
+    setEditName("");
+    setEditWeight("");
+  }
+
+  async function saveEditGear(item) {
+    if (!editName.trim() || !onPatchGear) { cancelEditGear(); return; }
+    const w = parseWeight(editWeight);
+    await onPatchGear(activeProfile, activeCat, item.id, {
+      name: editName.trim(),
+      weight_g: w == null ? 0 : w,
+    });
+    cancelEditGear();
   }
 
   async function addSharedItem() {
@@ -255,21 +281,59 @@ export default function Ekwipunek({
           <ul className="gear-list" style={{ marginBottom: "14px" }}>
             {catItems.map(item => (
               <li key={item.id} className={`gear-item ${item.packed ? "packed" : ""}`}>
-                <input type="checkbox" className="gear-checkbox" checked={item.packed}
-                  onChange={() => onToggleGear(activeProfile, activeCat, item.id, !item.packed)} />
-                <span className="gear-name">{item.name}</span>
-                {item.weight_g > 0 && (
-                  <span style={{
-                    fontSize: "11px", color: "var(--snow-faint)",
-                    fontFamily: "var(--font-mono)", flexShrink: 0,
-                  }}>
-                    {item.weight_g} g
-                  </span>
+                {editingId === item.id ? (
+                  <>
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={e => setEditName(e.target.value)}
+                      onKeyDown={e => { if (e.key === "Enter") saveEditGear(item); if (e.key === "Escape") cancelEditGear(); }}
+                      autoFocus
+                      style={{ flex: "1 1 120px", minWidth: 0, height: "34px" }}
+                    />
+                    <input
+                      type="number"
+                      value={editWeight}
+                      onChange={e => setEditWeight(e.target.value)}
+                      onKeyDown={e => { if (e.key === "Enter") saveEditGear(item); if (e.key === "Escape") cancelEditGear(); }}
+                      placeholder="Waga (g)"
+                      min="1"
+                      style={{ width: "84px", flexShrink: 0, height: "34px" }}
+                      title="Waga w gramach (opcjonalnie)"
+                    />
+                    <button className="btn-icon-action btn-edit-icon" onClick={() => saveEditGear(item)} title="Zapisz">
+                      <LuCheck size={16} />
+                    </button>
+                    <button className="btn-icon-action" onClick={cancelEditGear} title="Anuluj">
+                      <LuX size={16} />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <input type="checkbox" className="gear-checkbox" checked={item.packed}
+                      onChange={() => onToggleGear(activeProfile, activeCat, item.id, !item.packed)} />
+                    <span className="gear-name">{item.name}</span>
+                    {item.weight_g > 0 && (
+                      <span style={{
+                        fontSize: "11px", color: "var(--snow-faint)",
+                        fontFamily: "var(--font-mono)", flexShrink: 0,
+                      }}>
+                        {item.weight_g} g
+                      </span>
+                    )}
+                    {onPatchGear && (
+                      <button className="btn-icon-action btn-edit-icon"
+                        onClick={() => startEditGear(item)} title="Edytuj">
+                        <LuPencil size={15} />
+                      </button>
+                    )}
+                    <button className="btn-icon-action btn-delete-icon"
+                      onClick={() => setDeleteConfirm({ id: item.id, name: item.name, type: "gear" })}
+                      title="Usuń">
+                      <LuX size={16} />
+                    </button>
+                  </>
                 )}
-                <button className="btn btn-ghost btn-sm"
-                  onClick={() => setDeleteConfirm({ id: item.id, name: item.name, type: "gear" })}>
-                  ✕
-                </button>
               </li>
             ))}
           </ul>

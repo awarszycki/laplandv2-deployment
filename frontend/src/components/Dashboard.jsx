@@ -180,6 +180,17 @@ export default function Dashboard({ project, onBack }) {
     setGearItems(prev => prev.map(i => i.id === itemId ? { ...i, packed } : i));
   }, []);
 
+  // Edycja nazwy / wagi pozycji osobistej (name, weight_g).
+  // Backend: PATCH /api/gear/{id} z GearItemPatch + exclude_unset — bez zmian po stronie API.
+  const handlePatchGear = useCallback(async (memberId, category, itemId, patch) => {
+    await fetch(`/api/gear/${itemId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch),
+    });
+    setGearItems(prev => prev.map(i => i.id === itemId ? { ...i, ...patch } : i));
+  }, []);
+
   const handleDeleteGear = useCallback(async (memberId, category, itemId) => {
     await fetch(`/api/gear/${itemId}`, { method: "DELETE" });
     setGearItems(prev => prev.filter(i => i.id !== itemId));
@@ -293,6 +304,7 @@ export default function Dashboard({ project, onBack }) {
             onAddGear={handleAddGear}
             onToggleGear={handleToggleGear}
             onDeleteGear={handleDeleteGear}
+            onPatchGear={handlePatchGear}
             onAddSharedGear={handleAddSharedGear}
             onPatchSharedGear={handlePatchSharedGear}
             onDeleteSharedGear={handleDeleteSharedGear}
