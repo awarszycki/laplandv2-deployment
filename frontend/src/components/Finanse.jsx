@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { LuWallet, LuArrowLeftRight, LuArrowRight, LuReceipt } from "react-icons/lu";
 import ConfirmDialog from "./ConfirmDialog";
+import { calculateBalances, calculateTransfers } from "../lib/finance";
 
 const EUR_TO_PLN = 4.35;
 const COLORS = ["#00c896", "#f0a500", "#4ca0e0", "#e05555", "#a78bfa", "#fb923c", "#34d399", "#60a5fa"];
@@ -99,37 +100,16 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
     setDeleteConfirm(null);
   };
 
-  const balances = useMemo(() => {
-    const bal = {};
-    members.forEach(m => (bal[m.id] = 0));
-    expenses.forEach(e => {
-      const splits = e.splitIds?.length > 0 ? e.splitIds : members.map(m => m.id);
-      const share = e.amount / splits.length;
-      splits.forEach(id => { bal[id] = (bal[id] || 0) - share; });
-      if (e.payerId) bal[e.payerId] = (bal[e.payerId] || 0) + e.amount;
-    });
-    return bal;
-  }, [expenses, members]);
-
-  const transfers = useMemo(() => {
-    const debtors = members.map(m => ({ ...m, bal: balances[m.id] || 0 })).filter(m => m.bal < -0.01);
-    const creditors = members.map(m => ({ ...m, bal: balances[m.id] || 0 })).filter(m => m.bal > 0.01);
-    const result = [];
-    let i = 0, j = 0;
-    const d = debtors.map(x => ({ ...x }));
-    const c = creditors.map(x => ({ ...x }));
-    while (i < d.length && j < c.length) {
-      const amount = Math.min(-d[i].bal, c[j].bal);
-      result.push({ from: d[i].name, to: c[j].name, amount, fromId: d[i].id });
-      d[i].bal += amount;
-      c[j].bal -= amount;
-      if (Math.abs(d[i].bal) < 0.01) i++;
-      if (Math.abs(c[j].bal) < 0.01) j++;
-    }
-    return result;
-  }, [balances, members]);
+  const balances = useMemo(() => calculateBalances(members, expenses), [expenses, members]);
+  const transfers = useMemo(() => calculateTransfers(balances, members), [balances, members]);
 
   const getName = id => members.find(m => m.id === id)?.name || "?";
+  const splitLabel = (splitIds) => {
+    if (!splitIds || splitIds.length === 0) return "";
+    const isAll = members.length > 0 && splitIds.length === members.length && members.every(m => splitIds.includes(m.id));
+    if (isAll) return `dzielone na wszystkich (${splitIds.length})`;
+    return `dzielone: ${splitIds.map(getName).join(", ")}`;
+  };
   const canSave = form.title.trim() && form.amount && form.splitIds.length > 0 && form.payerId && !saving;
 
   return (
@@ -289,7 +269,7 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
                 <div className="expense-title">{e.title}</div>
                 <div className="expense-meta">
                   zapłacił(a) {getName(e.payerId)}
-                  {e.splitIds?.length > 0 ? ` · dzielone na ${e.splitIds.length}` : ""}
+                  {e.splitIds?.length > 0 ? ` · ${splitLabel(e.splitIds)}` : ""}
                   {e.currency === "EUR" && e.original_amount ? ` · ${e.original_amount.toFixed(2)} €` : ""}
                 </div>
               </div>
