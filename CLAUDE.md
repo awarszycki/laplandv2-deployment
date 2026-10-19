@@ -52,14 +52,24 @@ npm install
 npm run dev
 ```
 
-Uwaga: frontend woła względne ścieżki `/api/...`, a `vite.config.js` nie ma skonfigurowanego proxy, więc w `npm run dev` wywołania API nie trafią do backendu. Do pracy z danymi uruchom cały stack w Dockerze:
+Frontend woła względne ścieżki `/api/...`. W `npm run dev` Vite przekazuje `/api` i `/health` na lokalny backend `http://127.0.0.1:8000` (`server.proxy` w `vite.config.js`) — nigdy na produkcję. Backend musi więc działać lokalnie na porcie 8000. Alternatywnie uruchom cały stack w Dockerze:
 
 ```bash
 docker compose up -d --build     # aplikacja na http://localhost:3030 (za Basic Auth)
 docker compose logs -f
 ```
 
-Backend i baza nie mają wystawionych portów na hosta (dostęp tylko przez sieć Dockera). Do debugowania można lokalnie odkomentować `127.0.0.1:8000:8000` w compose — ale tylko lokalnie, nie commitować.
+W `docker-compose.yml` backend i baza nie mają wystawionych portów na hosta (dostęp tylko przez sieć Dockera). Żeby proxy Vite działało lokalnie, użyj nadpisania compose:
+
+```bash
+cp docker-compose.override.example.yml docker-compose.override.yml   # jednorazowo; plik jest w .gitignore
+docker compose up -d --build     # backend dodatkowo na 127.0.0.1:8000
+cd frontend && npm run dev       # http://localhost:5173, /api → lokalny backend
+```
+
+`docker-compose.override.yml` istnieje tylko na maszynie deweloperskiej — na produkcji go nie ma.
+
+Healthcheck: `GET /health` (backend; sprawdza też połączenie z bazą, 503 gdy baza niedostępna).
 
 ## Budowanie
 

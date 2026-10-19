@@ -8,3 +8,6 @@ frontend/dist/
 
 # sekrety (główny .env — na hasła bazy, krok 3e)
 /.env
+
+# lokalne nadpisanie compose (wzór: docker-compose.override.example.yml)
+docker-compose.override.yml
