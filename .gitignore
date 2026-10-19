@@ -1,0 +1,10 @@
+# zależności i wynik builda (budowane w Dockerze)
+node_modules/
+frontend/dist/
+
+# śmieci edytorów
+*.save
+*.swp
+
+# sekrety (główny .env — na hasła bazy, krok 3e)
+/.env
