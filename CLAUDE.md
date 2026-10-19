@@ -52,7 +52,7 @@ npm install
 npm run dev
 ```
 
-Uwaga: frontend woła względne ścieżki `/api/...`, a `vite.config.js` nie ma skonfigurowanego proxy, więc w `npm run dev` wywołania API nie trafią do backendu. Do pracy z danymi uruchom cały stack w Dockerze:
+Frontend woła względne ścieżki `/api/...`. W `npm run dev` Vite przekazuje `/api` i `/health` na lokalny backend `http://127.0.0.1:8000` (`server.proxy` w `vite.config.js`) — nigdy na produkcję. Backend musi więc działać lokalnie na porcie 8000. Alternatywnie uruchom cały stack w Dockerze:
 
 ```bash
 docker compose up -d --build     # aplikacja na http://localhost:3030 (za Basic Auth)
