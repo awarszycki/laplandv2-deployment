@@ -115,6 +115,19 @@ class SharedGearPatch(BaseModel):
     taken_by: Optional[int]  = None
     weight_g: Optional[int]  = None
 
+# ── HEALTHCHECK ───────────────────────────────────────────────────────
+
+@app.get("/health")
+async def health():
+    try:
+        pool = await get_db_pool()
+        async with pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("SELECT 1")
+        return {"status": "ok", "db": "ok"}
+    except Exception:
+        raise HTTPException(status_code=503, detail="Baza danych niedostępna")
+
 # ── PROJEKTY ──────────────────────────────────────────────────────────
 
 @app.get("/api/projects", response_model=List[Project])

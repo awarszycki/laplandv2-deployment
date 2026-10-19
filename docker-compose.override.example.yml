@@ -1,0 +1,9 @@
+# Lokalne nadpisanie dla developmentu — NIE używać na produkcji.
+# Skopiuj do docker-compose.override.yml (jest w .gitignore):
+#   cp docker-compose.override.example.yml docker-compose.override.yml
+# Docker Compose wczytuje go automatycznie przy `docker compose up`.
+# Wystawia backend tylko na localhost, żeby proxy Vite (`npm run dev`) miało dokąd iść.
+services:
+  lapland_backend:
+    ports:
+      - "127.0.0.1:8000:8000"
