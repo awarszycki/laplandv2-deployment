@@ -84,3 +84,4 @@ Backend i baza nie mają wystawionych portów na hosta (dostęp tylko przez sie�
 5. **Zmiany schematu bazy:** dopisz SQL do `backend/migrate.sql` (bezpieczny dla istniejących danych, idempotentny gdzie się da), w razie potrzeby zaktualizuj też `init.sql`, i opisz właścicielowi, co ma uruchomić. **Nigdy nie wykonuj migracji na produkcji.**
 6. **Interfejs aplikacji jest po polsku** — nowe teksty w UI piszemy po polsku.
 7. **Przy większych przebudowach najpierw przedstaw plan** i poczekaj na akceptację.
+8. **Twarde blokady** w `.claude/settings.json` (`permissions.deny`): zakaz `ssh`, `scp`, `rsync` (laptop ma klucz roota do serwera produkcyjnego — agent nie łączy się z serwerem), zakaz `git push` na `main` i `git push --force`/`-f`, zakaz czytania głównego `.env` (hasła bazy) i `~/.ssh`. Nie obchodź tych blokad ani ich nie usuwaj.
