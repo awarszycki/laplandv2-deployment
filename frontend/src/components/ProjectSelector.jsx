@@ -80,13 +80,9 @@ export default function ProjectSelector({ onSelectProject }) {
                   <div className="av" style={{ background: projColor(p.id) }}>
                     {projInitials(p.name)}
                   </div>
-                  <div style={{ textAlign: "left", flex: 1, marginRight: "10px" }}>
-                    <div style={{ fontWeight: 600, color: "var(--snow)", fontSize: "14px" }}>{p.name}</div>
-                    {p.description && (
-                      <div style={{ fontSize: "12px", color: "var(--snow-faint)", marginTop: "2px" }}>
-                        {p.description}
-                      </div>
-                    )}
+                  <div className="project-info">
+                    <div className="project-name">{p.name}</div>
+                    {p.description && <div className="project-desc">{p.description}</div>}
                   </div>
                   {/* Kosz — otwiera DeleteProjectDialog, nie niszczy danych od razu */}
                   <button
