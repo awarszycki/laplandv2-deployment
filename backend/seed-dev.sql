@@ -33,38 +33,38 @@ INSERT INTO expenses (title, description, amount, paid_by_id, project_id, split_
 
 -- Ekwipunek osobisty (wszystkie 8 kategorii; Michał > 15 kg)
 INSERT INTO gear_items (name, category, weight_g, packed, member_id, project_id) VALUES
-('Bielizna termiczna', 'Bielizna termiczna', 350, TRUE,  @ania, @p),
-('Kurtka puchowa', 'Kurtka puchowa', 780, TRUE,  @ania, @p),
-('Spodnie softshell', 'Spodnie softshell', 520, FALSE, @ania, @p),
-('Śpiwór zimowy', 'Śpiwór zimowy', 1650, FALSE, @ania, @p),
-('Czołówka', 'Czołówka', 90, TRUE,  @ania, @p),
-('Powerbank 20 000 mAh', 'Powerbank 20 000 mAh', 410, FALSE, @ania, @p),
-('Apteczka osobista', 'Apteczka osobista', 250, TRUE,  @ania, @p),
-('Paszport', 'Paszport', 0, TRUE,  @ania, @p),
+('Bielizna termiczna', 'clothing', 350, TRUE,  @ania, @p),
+('Kurtka puchowa', 'clothing', 780, TRUE,  @ania, @p),
+('Spodnie softshell', 'clothing', 520, FALSE, @ania, @p),
+('Śpiwór zimowy', 'camp', 1650, FALSE, @ania, @p),
+('Czołówka', 'nav', 90, TRUE,  @ania, @p),
+('Powerbank 20 000 mAh', 'electronics', 410, FALSE, @ania, @p),
+('Apteczka osobista', 'hygiene', 250, TRUE,  @ania, @p),
+('Paszport', 'docs', 0, TRUE,  @ania, @p),
 
-('Plecak 60 L', 'Plecak 60 L', 2100, TRUE,  @bartek, @p),
-('Polar', 'Polar', 450, TRUE,  @bartek, @p),
-('Karimata', 'Karimata', 480, FALSE, @bartek, @p),
-('Kompas', 'Kompas', 60, FALSE, @bartek, @p),
-('Liofilizaty (x5)', 'Liofilizaty (x5)', 650, FALSE, @bartek, @p),
-('Ubezpieczenie podróżne', 'Ubezpieczenie podróżne', 0, FALSE, @bartek, @p),
+('Plecak 60 L', 'bag', 2100, TRUE,  @bartek, @p),
+('Polar', 'clothing', 450, TRUE,  @bartek, @p),
+('Karimata', 'camp', 480, FALSE, @bartek, @p),
+('Kompas', 'nav', 60, FALSE, @bartek, @p),
+('Liofilizaty (x5)', 'food', 650, FALSE, @bartek, @p),
+('Ubezpieczenie podróżne', 'docs', 0, FALSE, @bartek, @p),
 
-('Kurtka przeciwdeszczowa', 'Kurtka przeciwdeszczowa', 390, TRUE,  @kasia, @p),
-('Termos 1 L', 'Termos 1 L', 540, TRUE,  @kasia, @p),
-('Telefon', 'Telefon', 210, TRUE,  @kasia, @p),
-('Ręcznik szybkoschnący', 'Ręcznik szybkoschnący', 180, TRUE,  @kasia, @p),
-('Worki wodoszczelne', 'Worki wodoszczelne', 150, TRUE,  @kasia, @p),
+('Kurtka przeciwdeszczowa', 'clothing', 390, TRUE,  @kasia, @p),
+('Termos 1 L', 'food', 540, TRUE,  @kasia, @p),
+('Telefon', 'electronics', 210, TRUE,  @kasia, @p),
+('Ręcznik szybkoschnący', 'hygiene', 180, TRUE,  @kasia, @p),
+('Worki wodoszczelne', 'bag', 150, TRUE,  @kasia, @p),
 
-('Plecak 75 L', 'Plecak 75 L', 2600, TRUE,  @michal, @p),
-('Śpiwór puchowy -20°C', 'Śpiwór puchowy -20°C', 2200, TRUE,  @michal, @p),
-('Namiot ekspedycyjny', 'Namiot ekspedycyjny', 4300, FALSE, @michal, @p),
-('Aparat + obiektywy', 'Aparat + obiektywy', 2400, FALSE, @michal, @p),
-('Statyw', 'Statyw', 1500, FALSE, @michal, @p),
-('Buty zimowe', 'Buty zimowe', 1900, TRUE,  @michal, @p),
-('Raki', 'Raki', 900, FALSE, @michal, @p),
+('Plecak 75 L', 'bag', 2600, TRUE,  @michal, @p),
+('Śpiwór puchowy -20°C', 'camp', 2200, TRUE,  @michal, @p),
+('Namiot ekspedycyjny', 'camp', 4300, FALSE, @michal, @p),
+('Aparat + obiektywy', 'electronics', 2400, FALSE, @michal, @p),
+('Statyw', 'electronics', 1500, FALSE, @michal, @p),
+('Buty zimowe', 'clothing', 1900, TRUE,  @michal, @p),
+('Raki', 'nav', 900, FALSE, @michal, @p),
 
-('Czapka i rękawice', 'Czapka i rękawice', 260, FALSE, @ola, @p),
-('Pasta + szczoteczka', 'Pasta + szczoteczka', 120, FALSE, @ola, @p);
+('Czapka i rękawice', 'clothing', 260, FALSE, @ola, @p),
+('Pasta + szczoteczka', 'hygiene', 120, FALSE, @ola, @p);
 
 -- Ekwipunek wspólny (przypisany i nieprzypisany)
 INSERT INTO shared_gear (name, weight_g, assigned_member_id, packed, project_id) VALUES
