@@ -97,7 +97,7 @@ export default function Ekipa({ members, expenses, myGear, currentUser, onAddMem
                     <div style={{ display:"flex", alignItems:"center", gap:"7px" }}>
                       <div className="member-name">{m.name}</div>
                       {isMe && (
-                        <span style={{ fontSize:"10px", background:"var(--aurora-dim)", color:"var(--aurora)", border:"1px solid rgba(0,200,150,0.3)", borderRadius:"10px", padding:"1px 7px", fontFamily:"var(--font-display)", fontWeight:700, letterSpacing:"0.3px" }}>
+                        <span style={{ fontSize:"10px", background:"var(--aurora-dim)", color:"var(--aurora)", border:"1px solid var(--accent-line)", borderRadius:"10px", padding:"1px 7px", fontFamily:"var(--font-display)", fontWeight:700, letterSpacing:"0.3px" }}>
                           TY
                         </span>
                       )}
