@@ -69,6 +69,14 @@ cd frontend && npm run dev       # http://localhost:5173, /api → lokalny backe
 
 `docker-compose.override.yml` istnieje tylko na maszynie deweloperskiej — na produkcji go nie ma.
 
+### Podgląd z danymi testowymi
+
+```bash
+scripts/seed-dev.sh              # po `docker compose up -d` z override
+```
+
+Wgrywa `backend/seed-dev.sql` do **lokalnej** bazy: projekt „[DEV] Testowy wyjazd” (5 osób, wydatki, ekwipunek we wszystkich kategoriach, sprzęt wspólny). Można uruchamiać wielokrotnie — poprzedni projekt testowy jest usuwany. Przy pustej bazie najpierw wgrywa schemat z `init.sql`. Skrypt przerywa, jeśli nie ma `docker-compose.override.yml`, ustawiony jest `DOCKER_HOST` albo kontekst Dockera nie jest `default`. Hasło bazy bierze z wnętrza kontenera. **Nigdy nie uruchamiać na produkcji.**
+
 Healthcheck: `GET /health` (backend; sprawdza też połączenie z bazą, 503 gdy baza niedostępna).
 
 ## Budowanie
