@@ -63,7 +63,7 @@ function WeightBadge({ weightG, label }) {
       fontFamily: "var(--font-mono)",
       color: weightG > 15000 ? "var(--amber)" : "var(--aurora)",
       background: weightG > 15000 ? "var(--amber-dim)" : "var(--aurora-dim)",
-      border: `1px solid ${weightG > 15000 ? "rgba(217,119,6,0.25)" : "rgba(31,168,90,0.25)"}`,
+      border: `1px solid ${weightG > 15000 ? "var(--warning-line)" : "var(--accent-line)"}`,
       borderRadius: "999px",
       padding: "2px 10px",
     }}>
