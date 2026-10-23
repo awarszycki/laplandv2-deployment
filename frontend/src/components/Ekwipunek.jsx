@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ConfirmDialog from "./ConfirmDialog";
+import { getAvatarColor } from "../lib/colors";
 import {
   LuShirt, LuTent, LuUtensils, LuCompass,
   LuBatteryFull, LuDroplets, LuLuggage, LuFileText,
@@ -7,8 +8,6 @@ import {
   LuPencil, LuCheck, LuX,
 } from "react-icons/lu";
 
-const COLORS = ["#00c896","#f0a500","#4ca0e0","#e05555","#a78bfa","#fb923c","#34d399","#60a5fa"];
-function getAvatarColor(id) { return COLORS[(id - 1) % COLORS.length]; }
 
 export const CATEGORIES = [
   { id: "clothing",    label: "Odzież",      icon: <LuShirt /> },
@@ -159,14 +158,14 @@ export default function Ekwipunek({
         <div className="section-label">Lista uczestnika</div>
 
         {/* Zakładki uczestników */}
-        <div className="profile-tabs">
+        <div className="profile-tabs filter-panel">
           {members.map(m => {
             const mPersonal = sumWeight(Object.values(myGear[m.id] || {}).flat());
             const mShared   = sumWeight(sharedGear.filter(i => i.taken_by === m.id));
             const mTotal    = mPersonal + mShared;
             return (
               <button key={m.id}
-                className={`profile-tab ${activeProfile === m.id ? "active" : ""}`}
+                className={`chip ${activeProfile === m.id ? "active" : ""}`}
                 onClick={() => setActiveProfile(m.id)}
               >
                 {m.name}
@@ -197,7 +196,10 @@ export default function Ekwipunek({
             </div>
           </div>
           <div className="stat">
-            <div className="stat-label">Łącznie</div>
+            <div className="stat-label">
+              Łącznie
+              {totalWeightG > 15000 && <span className="badge badge-warning">&gt; 15 kg</span>}
+            </div>
             <div className={`stat-value${totalWeightG > 15000 ? " warn" : totalWeightG > 0 ? "" : " muted"}`}>
               {gToKg(totalWeightG)}<span className="stat-unit">kg</span>
             </div>
@@ -213,7 +215,7 @@ export default function Ekwipunek({
           {CATEGORIES.map(cat => {
             const { total, packed } = catCount(cat.id);
             return (
-              <button key={cat.id} className={`cat-btn ${activeCat === cat.id ? "active" : ""}`}
+              <button key={cat.id} className={`cat-btn cat-${cat.id} ${activeCat === cat.id ? "active" : ""}`}
                 onClick={() => setActiveCat(cat.id)} title={cat.label}>
                 <span className="cat-btn-icon" style={{ display: "inline-flex", alignItems: "center" }}>{cat.icon}</span>
                 <span className="cat-btn-label">{cat.label}</span>
@@ -229,14 +231,14 @@ export default function Ekwipunek({
 
       {/* ── Panel aktywnej kategorii ── */}
       <div className="card">
-        <div className="cat-panel-head">
+        <div className={`cat-panel-head cat-${activeCat}`}>
           <span className="cat-panel-icon">{currentCat.icon}</span>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="cat-panel-title">{currentCat.label}</div>
             {catItems.length > 0 && <ProgressBar done={catItems.filter(i => i.packed).length} total={catItems.length} />}
           </div>
           {catItems.length > 0 && (
-            <span className={`cat-panel-meta${catItems.every(i => i.packed) ? " done" : ""}`}>
+            <span className={`badge ${catItems.every(i => i.packed) ? "badge-success" : "badge-outline"}`}>
               {catItems.filter(i => i.packed).length === catItems.length
                 ? "✓ gotowe"
                 : `${catItems.filter(i => !i.packed).length} pozostało`}
@@ -334,38 +336,11 @@ export default function Ekwipunek({
           </div>
 
           {showSuggestions && suggestions.length > 0 && (
-            <div style={{
-              marginTop: "8px",
-              background: "var(--night-raise)",
-              border: "1px solid var(--night-border)",
-              borderRadius: "var(--radius-md)",
-              padding: "10px", boxShadow: "var(--shadow-md)",
-            }}>
-              <div style={{
-                fontSize: "10px", fontWeight: 700, textTransform: "uppercase",
-                letterSpacing: "0.8px", color: "var(--snow-faint)",
-                marginBottom: "7px", fontFamily: "var(--font-display)",
-              }}>
-                Sugestie
-              </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "5px" }}>
+            <div className="filter-panel" style={{ marginTop: "8px" }}>
+              <div className="section-label">Sugestie</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
                 {suggestions.map(s => (
-                  <button key={s} onMouseDown={() => addItem(s)} style={{
-                    padding: "4px 10px", fontSize: "12px", fontWeight: 500,
-                    background: "var(--night-card)", border: "1px solid var(--night-border)",
-                    borderRadius: "20px", color: "var(--snow-faint)", cursor: "pointer",
-                    fontFamily: "var(--font-body)", transition: "all 0.12s",
-                  }}
-                  onMouseEnter={e => {
-                    e.target.style.background = "var(--aurora-dim)";
-                    e.target.style.borderColor = "var(--aurora)";
-                    e.target.style.color = "var(--aurora)";
-                  }}
-                  onMouseLeave={e => {
-                    e.target.style.background = "var(--night-card)";
-                    e.target.style.borderColor = "var(--night-border)";
-                    e.target.style.color = "var(--snow-faint)";
-                  }}>
+                  <button key={s} className="chip chip-sm" onMouseDown={() => addItem(s)}>
                     + {s}
                   </button>
                 ))}
@@ -424,22 +399,22 @@ export default function Ekwipunek({
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     {taker ? (
                       <span
-                        className="gear-taker"
-                        style={{ color: iMine ? "var(--aurora)" : "var(--ice)", cursor: iMine ? "pointer" : "default" }}
+                        className={`badge${iMine ? " badge-strong" : ""}`}
+                        style={{ background: iMine ? undefined : getAvatarColor(taker.id), cursor: iMine ? "pointer" : "default" }}
                         onClick={() => iMine && onPatchSharedGear(item.id, { taken_by: 0 })}
                         title={iMine ? "Kliknij żeby oddać" : ""}
                       >
                         {iMine ? "✓ Biorę" : taker.name}
                       </span>
                     ) : (
-                      <button className="btn btn-outline btn-sm" style={{ fontSize: "11px", padding: "3px 9px" }}
+                      <button className="chip chip-sm"
                         onClick={() => onPatchSharedGear(item.id, { taken_by: activeProfile })}>
                         Biorę
                       </button>
                     )}
-                    <button className="btn btn-ghost btn-sm"
+                    <button className="btn-icon-action btn-delete-icon" title="Usuń"
                       onClick={() => setDeleteConfirm({ id: item.id, name: item.name, type: "shared_gear" })}>
-                      ✕
+                      <LuX size={16} />
                     </button>
                   </div>
                 </li>
