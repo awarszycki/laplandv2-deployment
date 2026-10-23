@@ -2,12 +2,9 @@ import { useState, useMemo, useEffect } from "react";
 import { LuWallet, LuArrowLeftRight, LuArrowRight, LuReceipt } from "react-icons/lu";
 import ConfirmDialog from "./ConfirmDialog";
 import { calculateBalances, calculateTransfers } from "../lib/finance";
+import { getAvatarColor, initials } from "../lib/colors";
 
 const EUR_TO_PLN = 4.35;
-const COLORS = ["#00c896", "#f0a500", "#4ca0e0", "#e05555", "#a78bfa", "#fb923c", "#34d399", "#60a5fa"];
-
-function getAvatarColor(id) { return COLORS[(id - 1) % COLORS.length]; }
-function initials(name) { return name.slice(0, 2).toUpperCase(); }
 
 export default function Finanse({ members, expenses, currentUser, onAddExpense, onUpdateExpense, onDeleteExpense }) {
   const [editingId, setEditingId] = useState(null);
@@ -205,7 +202,7 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
                 </select>
               </div>
               {form.currency === "EUR" && form.amount && (
-                <div style={{ fontSize: "12px", color: "var(--snow-faint)", marginTop: "6px", fontFamily: "var(--font-mono)" }}>
+                <div style={{ fontSize: "14px", color: "var(--text-dim)", marginTop: "6px" }}>
                   ≈ {amountPLN.toFixed(2)} zł (kurs {EUR_TO_PLN})
                 </div>
               )}
@@ -218,7 +215,7 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
                   <button
                     key={m.id}
                     type="button"
-                    className={`payer-btn ${form.payerId === m.id.toString() ? "active" : ""}`}
+                    className={`chip ${form.payerId === m.id.toString() ? "active" : ""}`}
                     onClick={() => setForm(f => ({ ...f, payerId: m.id.toString() }))}
                   >
                     <span className="avatar avatar-sm" style={{ background: getAvatarColor(m.id) }}>{initials(m.name)}</span>
@@ -235,7 +232,7 @@ export default function Finanse({ members, expenses, currentUser, onAddExpense, 
                   <button
                     key={m.id}
                     type="button"
-                    className={`person-tile ${form.splitIds.includes(m.id) ? "selected" : ""}`}
+                    className={`chip ${form.splitIds.includes(m.id) ? "active" : ""}`}
                     onClick={() => toggleSplit(m.id)}
                   >
                     {m.name}

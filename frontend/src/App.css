@@ -61,21 +61,15 @@
   --shadow-sm: none;
   --shadow-md: 0 16px 40px rgba(0,0,0,0.45);   /* tylko elementy pływające */
 
-  /* Aliasy starych nazw — używane w stylach inline komponentów (do usunięcia w etapie 3) */
-  --night:        var(--bg);
-  --night-mid:    var(--surface-1);
-  --night-card:   var(--surface-1);
-  --night-raise:  var(--surface-2);
-  --night-border: var(--line);
-  --snow:         var(--text);
-  --snow-dim:     var(--text-dim);
-  --snow-faint:   var(--text-faint);
-  --aurora:       var(--accent);
-  --aurora-dim:   var(--accent-dim);
-  --ice:          var(--teal);
-  --ice-dim:      var(--teal-dim);
-  --amber:        var(--warning);
-  --amber-dim:    var(--warning-dim);
+  /* Paleta avatarów, odznak i kategorii (ciemny tekst --text-on-badge, kontrast ≥ 7:1) */
+  --c-1: #60a5fa;   /* niebieski */
+  --c-2: #fb923c;   /* pomarańczowy */
+  --c-3: #4ade80;   /* zielony */
+  --c-4: #c084fc;   /* fioletowy */
+  --c-5: #facc15;   /* żółty */
+  --c-6: #f472b6;   /* różowy */
+  --c-7: #2dd4bf;   /* turkusowy */
+  --c-8: #f87171;   /* czerwony */
 }
 
 /* Natywne kontrolki (strzałki pól liczbowych, checkboxy, listy) w ciemnym wariancie */
@@ -242,7 +236,6 @@ html, body, #root {
   font-size: 14px;
 }
 
-.section-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
 /* ══════════════════════════════════════════
    STATYSTYKI — ETYKIETA nad dużą wartością
@@ -390,7 +383,6 @@ select option { background: var(--surface-1); color: var(--text); }
   border-radius: var(--radius-sm);
 }
 .btn-ghost:hover { background: var(--surface-2); color: var(--text-dim); }
-.btn-full { width: 100%; justify-content: center; margin-top: 12px; }
 
 /* ══════════════════════════════════════════
    AVATAR
@@ -406,14 +398,11 @@ select option { background: var(--surface-1); color: var(--text); }
 .avatar-lg { width: 46px; height: 46px; font-size: 16px; }
 
 /* ══════════════════════════════════════════
-   CHIPY — pigułki z obrysem
-   (person-tile, profile-tab, payer-btn)
+   CHIPY — pigułki z obrysem; aktywny: niebieski obrys i tekst
 ══════════════════════════════════════════ */
 .person-tiles { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 
-.person-tile,
-.profile-tab,
-.payer-btn {
+.chip {
   display: inline-flex; align-items: center; gap: 7px;
   padding: 6px 16px; border-radius: 999px;
   border: 1.5px solid var(--line-strong);
@@ -424,17 +413,54 @@ select option { background: var(--surface-1); color: var(--text); }
   cursor: pointer; user-select: none;
   transition: border-color 0.15s, color 0.15s, background 0.15s;
 }
-.person-tile:hover,
-.profile-tab:hover,
-.payer-btn:hover { color: var(--text); border-color: var(--text-dim); }
+.chip:hover:not(:disabled) { color: var(--text); border-color: var(--text-dim); }
 
-.person-tile.selected,
-.profile-tab.active,
-.payer-btn.active {
+.chip.active {
   border-color: var(--accent);
   color: var(--accent);
   background: var(--accent-dim);
 }
+.chip:disabled { opacity: 0.45; cursor: not-allowed; }
+.chip-sm { padding: 4px 12px; font-size: 14px; gap: 5px; }
+
+/* Wklęsły panel na grupę chipów-filtrów */
+.filter-panel {
+  background: var(--surface-3);
+  border-radius: var(--radius-lg);
+  padding: 10px;
+}
+
+/* ══════════════════════════════════════════
+   ODZNAKI — pełne tło, ciemny tekst, WERSALIKI
+══════════════════════════════════════════ */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: var(--font-display);
+  font-size: 12px; font-weight: 700; line-height: 1.5;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  padding: 1px 8px;
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--text-on-badge);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.badge-success { background: var(--success); }
+.badge-warning { background: var(--warning); }
+.badge-danger  { background: var(--danger); }
+.badge-strong  { background: var(--accent-strong); color: var(--text-on-fill); }
+.badge-outline { background: transparent; color: var(--text-dim); box-shadow: inset 0 0 0 1.5px var(--line-strong); }
+button.badge { border: none; cursor: pointer; }
+
+/* Kolory kategorii ekwipunku (z palety) */
+.cat-clothing    { --cat: var(--c-1); }
+.cat-camp        { --cat: var(--c-3); }
+.cat-food        { --cat: var(--c-2); }
+.cat-nav         { --cat: var(--c-5); }
+.cat-electronics { --cat: var(--c-4); }
+.cat-hygiene     { --cat: var(--c-7); }
+.cat-bag         { --cat: var(--c-6); }
+.cat-docs        { --cat: var(--c-8); }
 
 /* ══════════════════════════════════════════
    BALANCE
@@ -533,7 +559,6 @@ select option { background: var(--surface-1); color: var(--text); }
   width: 20px; height: 20px; cursor: pointer;
   accent-color: var(--accent); flex-shrink: 0;
 }
-.gear-taker { font-size: 14px; color: var(--accent); font-weight: 600; }
 .gear-weight { font-size: 14px; color: var(--text-dim); flex-shrink: 0; }
 
 /* Nagłówek panelu aktywnej kategorii */
@@ -542,10 +567,15 @@ select option { background: var(--surface-1); color: var(--text); }
   margin-bottom: 14px; padding-bottom: 12px;
   border-bottom: 1px solid var(--line);
 }
-.cat-panel-icon { font-size: 22px; display: inline-flex; color: var(--accent); }
+.cat-panel-icon {
+  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  background: var(--cat, var(--accent));
+  color: var(--text-on-badge);
+}
 .cat-panel-title { font-family: var(--font-display); font-weight: 700; font-size: 18px; }
-.cat-panel-meta  { font-size: 14px; color: var(--text-dim); white-space: nowrap; }
-.cat-panel-meta.done { color: var(--success); font-weight: 600; }
+
 
 /* ══════════════════════════════════════════
    CATEGORY BAR — wklęsły panel filtrów
@@ -580,7 +610,7 @@ select option { background: var(--surface-1); color: var(--text); }
 }
 .cat-btn:hover { background: var(--surface-1); color: var(--text); }
 .cat-btn.active { border-color: var(--accent); color: var(--accent); }
-.cat-btn-icon { font-size: 20px; line-height: 1; }
+.cat-btn-icon { font-size: 20px; line-height: 1; color: var(--cat, currentColor); }
 .cat-btn-label {
   font-family: var(--font-display);
   font-size: 12px; font-weight: 600;
@@ -621,9 +651,9 @@ select option { background: var(--surface-1); color: var(--text); }
 /* ══════════════════════════════════════════
    PROFILE TABS
 ══════════════════════════════════════════ */
-.profile-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.profile-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
 .chip-meta { font-size: 13px; color: var(--text-faint); margin-left: 2px; }
-.profile-tab.active .chip-meta { color: var(--accent); }
+.chip.active .chip-meta { color: var(--accent); }
 
 /* ══════════════════════════════════════════
    MEMBER LIST
@@ -647,7 +677,6 @@ select option { background: var(--surface-1); color: var(--text); }
 .member-item:hover { background: var(--surface-2-hover); }
 .member-info { flex: 1; min-width: 0; }
 .member-name { font-size: 17px; font-weight: 600; color: var(--text); font-family: var(--font-display); }
-.member-stats { font-size: 13px; color: var(--text-faint); margin-top: 2px; }
 .member-actions { display: flex; gap: 6px; }
 .member-item .stat-row {
   grid-column: 1 / -1;
@@ -674,8 +703,6 @@ input.name-input {
 ══════════════════════════════════════════ */
 .empty-state { text-align: center; padding: 32px 16px; color: var(--text-faint); font-size: 15px; }
 .empty-icon { font-size: 30px; margin-bottom: 10px; color: var(--text-faint); }
-
-.divider { border: none; height: 1px; background: var(--line); margin: 16px 0; }
 
 .section-label {
   font-family: var(--font-display);
@@ -744,13 +771,6 @@ input.name-input {
   display: block;
 }
 
-.login-member-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 24px;
-}
-
 .login-member-btn {
   display: flex; align-items: center; gap: 12px;
   padding: 14px 16px;
@@ -768,19 +788,6 @@ input.name-input {
   font-family: var(--font-display); font-size: 13px; font-weight: 700;
   color: var(--text-on-badge); flex-shrink: 0;
 }
-
-.login-divider {
-  border: none; height: 1px; background: var(--line); margin: 22px 0;
-  position: relative;
-}
-.login-divider::after {
-  content: 'lub dołącz jako nowy uczestnik';
-  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  background: var(--surface-1); padding: 0 12px;
-  font-size: 12px; color: var(--text-faint); white-space: nowrap;
-}
-
-.login-new-row { display: flex; gap: 8px; }
 
 .project-info { text-align: left; flex: 1; min-width: 0; margin-right: 10px; }
 .project-name { font-family: var(--font-display); font-weight: 600; font-size: 18px; color: var(--text); line-height: 1.25; }
@@ -814,30 +821,6 @@ input.name-input {
 .dialog-actions .btn { flex: 1; justify-content: center; }
 
 /* ══════════════════════════════════════════
-   TOAST NOTIFICATIONS
-══════════════════════════════════════════ */
-.toast-wrap {
-  position: fixed; bottom: 24px; right: 24px;
-  display: flex; flex-direction: column; gap: 8px;
-  z-index: 9999;
-}
-.toast {
-  background: var(--surface-2);
-  border-radius: var(--radius-md);
-  padding: 12px 18px;
-  font-size: 15px; color: var(--text);
-  box-shadow: var(--shadow-md);
-  animation: slideIn 0.25s ease;
-  max-width: 300px;
-}
-.toast.ok  { border-left: 3px solid var(--success); }
-.toast.err { border-left: 3px solid var(--danger); }
-@keyframes slideIn {
-  from { opacity: 0; transform: translateX(20px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-
-/* ══════════════════════════════════════════
    LOADING
 ══════════════════════════════════════════ */
 .loading-screen {
@@ -858,11 +841,9 @@ input.name-input {
    RESPONSIVE
 ══════════════════════════════════════════ */
 @media (max-width: 640px) {
-  .section-grid { grid-template-columns: 1fr; }
-  .tab-btn span:not(.tab-icon) { display: none; }
+    .tab-btn span:not(.tab-icon) { display: none; }
   .tab-btn { padding: 8px 12px; }
   .app-main { padding: 16px 14px 50px; }
-  .login-member-grid { grid-template-columns: 1fr; }
   .member-list { grid-template-columns: 1fr; }
   .card { padding: 18px 16px; }
 }
@@ -1061,16 +1042,7 @@ svg.w-12 {
 }
 
 /* Utility classes dla tekstu */
-.text-snow { color: var(--text); }
-.text-snow-dim { color: var(--text-dim); }
-.text-snow-faint { color: var(--text-faint); }
 .text-aurora { color: var(--accent); }
-.text-ice { color: var(--teal); }
-.text-amber { color: var(--warning); }
-.text-danger { color: var(--danger); }
 
 /* Spacing utilities */
 .mx-auto { margin-left: auto; margin-right: auto; }
-.mt-2 { margin-top: 8px; }
-.mb-2 { margin-bottom: 8px; }
-.ml-3 { margin-left: 12px; }

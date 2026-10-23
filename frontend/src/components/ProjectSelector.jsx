@@ -1,9 +1,6 @@
 import { useState, useEffect } from "react";
 import DeleteProjectDialog from "./DeleteProjectDialog";
-
-const COLORS = ["#00c896","#f0a500","#4ca0e0","#e05555","#a78bfa","#fb923c","#34d399","#60a5fa"];
-function projColor(id)     { return COLORS[(id - 1) % COLORS.length]; }
-function projInitials(name){ return name.slice(0, 2).toUpperCase(); }
+import { getAvatarColor, initials } from "../lib/colors";
 
 export default function ProjectSelector({ onSelectProject }) {
   const [projects, setProjects]         = useState([]);
@@ -77,8 +74,8 @@ export default function ProjectSelector({ onSelectProject }) {
                   className="login-member-btn row-project-item"
                   onClick={() => onSelectProject(p)}
                 >
-                  <div className="av" style={{ background: projColor(p.id) }}>
-                    {projInitials(p.name)}
+                  <div className="av" style={{ background: getAvatarColor(p.id) }}>
+                    {initials(p.name)}
                   </div>
                   <div className="project-info">
                     <div className="project-name">{p.name}</div>

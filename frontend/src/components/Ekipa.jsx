@@ -2,9 +2,7 @@ import { useState } from "react";
 // 1. Importujemy profesjonalne ikony z zestawu Lucide (lu)
 import { LuSwords, LuLayoutDashboard, LuPencil, LuTrash2 } from "react-icons/lu";
 
-const COLORS = ["#00c896","#f0a500","#4ca0e0","#e05555","#a78bfa","#fb923c","#34d399","#60a5fa"];
-function getAvatarColor(id) { return COLORS[(id - 1) % COLORS.length]; }
-function initials(name) { return name.slice(0, 2).toUpperCase(); }
+import { getAvatarColor, initials } from "../lib/colors";
 
 function getGearStats(gearForMember) {
   let total = 0, packed = 0;
@@ -97,9 +95,7 @@ export default function Ekipa({ members, expenses, myGear, currentUser, onAddMem
                     <div style={{ display:"flex", alignItems:"center", gap:"7px" }}>
                       <div className="member-name">{m.name}</div>
                       {isMe && (
-                        <span style={{ fontSize:"10px", background:"var(--aurora-dim)", color:"var(--aurora)", border:"1px solid var(--accent-line)", borderRadius:"10px", padding:"1px 7px", fontFamily:"var(--font-display)", fontWeight:700, letterSpacing:"0.3px" }}>
-                          TY
-                        </span>
+                        <span className="badge">Ty</span>
                       )}
                     </div>
                   )}
