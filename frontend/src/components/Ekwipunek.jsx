@@ -3,7 +3,7 @@ import ConfirmDialog from "./ConfirmDialog";
 import {
   LuShirt, LuTent, LuUtensils, LuCompass,
   LuBatteryFull, LuDroplets, LuLuggage, LuFileText,
-  LuHandshake, LuPackageOpen, LuBackpack, LuUsers, LuScale,
+  LuHandshake, LuPackageOpen,
   LuPencil, LuCheck, LuX,
 } from "react-icons/lu";
 
@@ -50,25 +50,6 @@ function ProgressBar({ done, total }) {
       </div>
       <span className="progress-label">{done}/{total}</span>
     </div>
-  );
-}
-
-/** Pill wyświetlający całkowitą wagę uczestnika (osobista + shared który bierze) */
-function WeightBadge({ weightG, label }) {
-  if (weightG === 0) return null;
-  return (
-    <span style={{
-      display: "inline-flex", alignItems: "center", gap: "4px",
-      fontSize: "12px", fontWeight: 700,
-      fontFamily: "var(--font-mono)",
-      color: weightG > 15000 ? "var(--amber)" : "var(--aurora)",
-      background: weightG > 15000 ? "var(--amber-dim)" : "var(--aurora-dim)",
-      border: `1px solid ${weightG > 15000 ? "var(--warning-line)" : "var(--accent-line)"}`,
-      borderRadius: "999px",
-      padding: "2px 10px",
-    }}>
-      <LuScale size={13} /> {label}: {gToKg(weightG)} kg
-    </span>
   );
 }
 
@@ -174,22 +155,11 @@ export default function Ekwipunek({
     <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
 
       {/* ── Profil uczestnika + waga całkowita ── */}
-      <div className="card" style={{ padding: "14px 18px" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px", flexWrap: "wrap", gap: "6px" }}>
-          <span className="section-label">Lista uczestnika</span>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-            {totalAll > 0 && (
-              <span style={{ fontSize: "12px", fontWeight: 600, color: packedAll === totalAll ? "var(--aurora)" : "var(--snow-faint)" }}>
-                {packedAll === totalAll ? "✓ Wszystko spakowane!" : `${packedAll} z ${totalAll} spakowane`}
-              </span>
-            )}
-            {/* Całkowita waga uczestnika */}
-            <WeightBadge weightG={totalWeightG} label="Łącznie" />
-          </div>
-        </div>
+      <div className="card">
+        <div className="section-label">Lista uczestnika</div>
 
         {/* Zakładki uczestników */}
-        <div className="profile-tabs" style={{ marginBottom: totalAll > 0 ? "10px" : 0 }}>
+        <div className="profile-tabs">
           {members.map(m => {
             const mPersonal = sumWeight(Object.values(myGear[m.id] || {}).flat());
             const mShared   = sumWeight(sharedGear.filter(i => i.taken_by === m.id));
@@ -200,39 +170,41 @@ export default function Ekwipunek({
                 onClick={() => setActiveProfile(m.id)}
               >
                 {m.name}
-                {mTotal > 0 && (
-                  <span style={{
-                    marginLeft: "5px", fontSize: "10px", fontFamily: "var(--font-mono)",
-                    opacity: activeProfile === m.id ? 1 : 0.6,
-                  }}>
-                    {gToKg(mTotal)} kg
-                  </span>
-                )}
+                {mTotal > 0 && <span className="chip-meta">{gToKg(mTotal)} kg</span>}
               </button>
             );
           })}
         </div>
 
-        <ProgressBar done={packedAll} total={totalAll} />
-
-        {/* Rozbicie wagi: osobista vs wspólna */}
-        {totalWeightG > 0 && (
-          <div style={{
-            marginTop: "10px", display: "flex", gap: "8px", flexWrap: "wrap",
-            paddingTop: "10px", borderTop: "1px solid var(--night-border)",
-          }}>
-            {personalWeightG > 0 && (
-              <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", fontSize: "11px", color: "var(--snow-faint)", fontFamily: "var(--font-mono)" }}>
-                <LuBackpack size={13} /> Osobisty: <strong style={{ color: "var(--snow-dim)" }}>{gToKg(personalWeightG)} kg</strong>
-              </span>
-            )}
-            {sharedWeightG > 0 && (
-              <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", fontSize: "11px", color: "var(--snow-faint)", fontFamily: "var(--font-mono)" }}>
-                <LuUsers size={13} /> Wspólny: <strong style={{ color: "var(--ice)" }}>{gToKg(sharedWeightG)} kg</strong>
-              </span>
-            )}
+        {/* Spakowanie i waga: osobista, wspólna (przedmioty „Biorę”), łącznie */}
+        <div className="stat-row four" style={{ marginBottom: totalAll > 0 ? "12px" : 0 }}>
+          <div className="stat">
+            <div className="stat-label">Spakowane</div>
+            <div className={`stat-value${totalAll > 0 && packedAll === totalAll ? " plus" : totalAll === 0 ? " muted" : ""}`}>
+              {totalAll > 0 ? `${packedAll}/${totalAll}` : "—"}
+            </div>
           </div>
-        )}
+          <div className="stat">
+            <div className="stat-label">Osobisty</div>
+            <div className={`stat-value${personalWeightG > 0 ? "" : " muted"}`}>
+              {gToKg(personalWeightG)}<span className="stat-unit">kg</span>
+            </div>
+          </div>
+          <div className="stat">
+            <div className="stat-label">Wspólny</div>
+            <div className={`stat-value${sharedWeightG > 0 ? "" : " muted"}`}>
+              {gToKg(sharedWeightG)}<span className="stat-unit">kg</span>
+            </div>
+          </div>
+          <div className="stat">
+            <div className="stat-label">Łącznie</div>
+            <div className={`stat-value${totalWeightG > 15000 ? " warn" : totalWeightG > 0 ? "" : " muted"}`}>
+              {gToKg(totalWeightG)}<span className="stat-unit">kg</span>
+            </div>
+          </div>
+        </div>
+
+        <ProgressBar done={packedAll} total={totalAll} />
       </div>
 
       {/* ── Pasek kategorii ── */}
@@ -257,14 +229,14 @@ export default function Ekwipunek({
 
       {/* ── Panel aktywnej kategorii ── */}
       <div className="card">
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px", paddingBottom: "12px", borderBottom: "1px solid var(--night-border)" }}>
-          <span style={{ fontSize: "22px", display: "inline-flex", alignItems: "center" }}>{currentCat.icon}</span>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 700, fontSize: "15px", fontFamily: "var(--font-display)" }}>{currentCat.label}</div>
+        <div className="cat-panel-head">
+          <span className="cat-panel-icon">{currentCat.icon}</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="cat-panel-title">{currentCat.label}</div>
             {catItems.length > 0 && <ProgressBar done={catItems.filter(i => i.packed).length} total={catItems.length} />}
           </div>
           {catItems.length > 0 && (
-            <span style={{ fontSize: "11px", color: "var(--snow-faint)" }}>
+            <span className={`cat-panel-meta${catItems.every(i => i.packed) ? " done" : ""}`}>
               {catItems.filter(i => i.packed).length === catItems.length
                 ? "✓ gotowe"
                 : `${catItems.filter(i => !i.packed).length} pozostało`}
@@ -314,10 +286,7 @@ export default function Ekwipunek({
                       onChange={() => onToggleGear(activeProfile, activeCat, item.id, !item.packed)} />
                     <span className="gear-name">{item.name}</span>
                     {item.weight_g > 0 && (
-                      <span style={{
-                        fontSize: "11px", color: "var(--snow-faint)",
-                        fontFamily: "var(--font-mono)", flexShrink: 0,
-                      }}>
+                      <span className="gear-weight">
                         {item.weight_g} g
                       </span>
                     )}
@@ -412,7 +381,7 @@ export default function Ekwipunek({
           <span style={{ display: "inline-flex", alignItems: "center", marginRight: "6px" }}><LuHandshake /></span>
           Wspólna lista
           {sharedGear.length > 0 && (
-            <span style={{ marginLeft: "auto", fontSize: "11px", fontFamily: "var(--font-display)", color: "var(--snow-faint)" }}>
+            <span style={{ marginLeft: "auto", fontSize: "15px", color: "var(--text-dim)", letterSpacing: 0 }}>
               {sharedPacked}/{sharedGear.length}
             </span>
           )}
@@ -420,8 +389,8 @@ export default function Ekwipunek({
 
         {/* Legenda logiki wagi */}
         <p style={{
-          fontSize: "11px", color: "var(--snow-faint)",
-          marginBottom: "10px", lineHeight: 1.5,
+          fontSize: "14px", color: "var(--text-dim)",
+          marginBottom: "12px", lineHeight: 1.5,
         }}>
           Waga przedmiotu wspólnego dolicza się do uczestnika, który kliknie „Biorę".
         </p>
@@ -448,10 +417,7 @@ export default function Ekwipunek({
                     onChange={() => onPatchSharedGear(item.id, { packed: !item.packed })} />
                   <span className="gear-name">{item.name}</span>
                   {item.weight_g > 0 && (
-                    <span style={{
-                      fontSize: "11px", color: "var(--snow-faint)",
-                      fontFamily: "var(--font-mono)", flexShrink: 0,
-                    }}>
+                    <span className="gear-weight">
                       {item.weight_g} g
                     </span>
                   )}

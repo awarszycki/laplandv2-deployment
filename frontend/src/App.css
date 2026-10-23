@@ -78,6 +78,9 @@
   --amber-dim:    var(--warning-dim);
 }
 
+/* Natywne kontrolki (strzałki pól liczbowych, checkboxy, listy) w ciemnym wariancie */
+:root { color-scheme: dark; }
+
 html, body, #root {
   min-height: 100%;
   font-family: var(--font-body);
@@ -240,6 +243,52 @@ html, body, #root {
 }
 
 .section-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* ══════════════════════════════════════════
+   STATYSTYKI — ETYKIETA nad dużą wartością
+══════════════════════════════════════════ */
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 10px 18px;
+}
+/* Cztery statystyki: 2×2 na telefonie, w jednym rzędzie od 520px */
+.stat-row.four { grid-template-columns: repeat(2, 1fr); }
+@media (min-width: 520px) { .stat-row.four { grid-template-columns: repeat(4, 1fr); } }
+.stat { min-width: 0; }
+.stat-label {
+  display: flex; align-items: center; gap: 5px;
+  font-family: var(--font-display);
+  font-size: 12px; font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.stat-value {
+  font-family: var(--font-display);
+  font-size: 24px; font-weight: 600; line-height: 1.2;
+  color: var(--text);
+  white-space: nowrap;
+}
+.stat-value.sm   { font-size: 18px; }
+.stat-value.plus { color: var(--success); }
+.stat-value.minus{ color: var(--danger); }
+.stat-value.warn { color: var(--warning); }
+.stat-value.muted{ color: var(--text-faint); }
+.stat-unit { font-size: 0.7em; font-weight: 500; color: var(--text-dim); margin-left: 3px; }
+
+/* Kafelki statystyk (podsumowania) */
+.stat-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+}
+.stat-tile {
+  background: var(--surface-2);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  min-width: 0;
+}
 
 /* ══════════════════════════════════════════
    FORMS & INPUTS
@@ -409,7 +458,7 @@ select option { background: var(--surface-1); color: var(--text); }
   text-transform: uppercase; letter-spacing: 0.06em;
   margin-bottom: 4px;
 }
-.balance-amount { font-size: 20px; font-weight: 600; color: var(--text); }
+.balance-amount { font-family: var(--font-display); font-size: 22px; font-weight: 600; color: var(--text); }
 .balance-amount.plus  { color: var(--success); }
 .balance-amount.minus { color: var(--danger); }
 .balance-amount.zero  { color: var(--text-faint); }
@@ -448,7 +497,7 @@ select option { background: var(--surface-1); color: var(--text); }
 .expense-info { flex: 1; min-width: 0; }
 .expense-title { font-weight: 600; font-size: 16px; margin-bottom: 2px; color: var(--text); }
 .expense-meta  { font-size: 13px; color: var(--text-faint); }
-.expense-amount { font-size: 17px; font-weight: 700; color: var(--warning); flex-shrink: 0; }
+.expense-amount { font-family: var(--font-display); font-size: 20px; font-weight: 600; color: var(--warning); flex-shrink: 0; }
 
 /* ══════════════════════════════════════════
    ADD FORM (inline panel)
@@ -484,7 +533,19 @@ select option { background: var(--surface-1); color: var(--text); }
   width: 20px; height: 20px; cursor: pointer;
   accent-color: var(--accent); flex-shrink: 0;
 }
-.gear-taker { font-size: 13px; color: var(--accent); font-weight: 600; }
+.gear-taker { font-size: 14px; color: var(--accent); font-weight: 600; }
+.gear-weight { font-size: 14px; color: var(--text-dim); flex-shrink: 0; }
+
+/* Nagłówek panelu aktywnej kategorii */
+.cat-panel-head {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 14px; padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.cat-panel-icon { font-size: 22px; display: inline-flex; color: var(--accent); }
+.cat-panel-title { font-family: var(--font-display); font-weight: 700; font-size: 18px; }
+.cat-panel-meta  { font-size: 14px; color: var(--text-dim); white-space: nowrap; }
+.cat-panel-meta.done { color: var(--success); font-weight: 600; }
 
 /* ══════════════════════════════════════════
    CATEGORY BAR — wklęsły panel filtrów
@@ -561,6 +622,8 @@ select option { background: var(--surface-1); color: var(--text); }
    PROFILE TABS
 ══════════════════════════════════════════ */
 .profile-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.chip-meta { font-size: 13px; color: var(--text-faint); margin-left: 2px; }
+.profile-tab.active .chip-meta { color: var(--accent); }
 
 /* ══════════════════════════════════════════
    MEMBER LIST
@@ -572,7 +635,10 @@ select option { background: var(--surface-1); color: var(--text); }
   gap: 10px;
 }
 .member-item {
-  display: flex; align-items: center; gap: 13px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px 13px;
   padding: 14px 16px;
   background: var(--surface-2);
   border-radius: var(--radius-md);
@@ -583,6 +649,11 @@ select option { background: var(--surface-1); color: var(--text); }
 .member-name { font-size: 17px; font-weight: 600; color: var(--text); font-family: var(--font-display); }
 .member-stats { font-size: 13px; color: var(--text-faint); margin-top: 2px; }
 .member-actions { display: flex; gap: 6px; }
+.member-item .stat-row {
+  grid-column: 1 / -1;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
 
 /* ══════════════════════════════════════════
    PAYER SELECT
@@ -710,6 +781,10 @@ input.name-input {
 }
 
 .login-new-row { display: flex; gap: 8px; }
+
+.project-info { text-align: left; flex: 1; min-width: 0; margin-right: 10px; }
+.project-name { font-family: var(--font-display); font-weight: 600; font-size: 18px; color: var(--text); line-height: 1.25; }
+.project-desc { font-size: 14px; color: var(--text-dim); margin-top: 2px; }
 
 /* ══════════════════════════════════════════
    DIALOGI

@@ -1,6 +1,6 @@
 import { useState } from "react";
 // 1. Importujemy profesjonalne ikony z zestawu Lucide (lu)
-import { LuUsers, LuReceipt, LuCoins, LuSwords, LuLayoutDashboard, LuPencil, LuTrash2 } from "react-icons/lu";
+import { LuSwords, LuLayoutDashboard, LuPencil, LuTrash2 } from "react-icons/lu";
 
 const COLORS = ["#00c896","#f0a500","#4ca0e0","#e05555","#a78bfa","#fb923c","#34d399","#60a5fa"];
 function getAvatarColor(id) { return COLORS[(id - 1) % COLORS.length]; }
@@ -50,19 +50,19 @@ export default function Ekipa({ members, expenses, myGear, currentUser, onAddMem
         <div className="card-title">
           <span><LuLayoutDashboard size={16} /></span> Podsumowanie wyprawy
         </div>
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:"10px" }}>
-          {[
-            // Zmieniono emoji na gotowe komponenty React Icons
-            { label:"Uczestników", value: members.length, icon: <LuUsers size={24} color="var(--ice)" /> },
-            { label:"Wydatków",    value: expenses.length, icon: <LuReceipt size={24} color="var(--amber)" /> },
-            { label:"Łącznie",     value: totalSpent.toFixed(2) + " zł", icon: <LuCoins size={24} color="var(--aurora)" /> },
-          ].map(stat => (
-            <div key={stat.label} className="balance-item" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-              <div style={{ marginBottom:"6px", display: "flex", alignItems: "center" }}>{stat.icon}</div>
-              <div className="balance-name">{stat.label}</div>
-              <div className="balance-amount" style={{ color:"var(--amber)", fontSize:"15px" }}>{stat.value}</div>
-            </div>
-          ))}
+        <div className="stat-tiles">
+          <div className="stat-tile stat">
+            <div className="stat-label">Uczestnicy</div>
+            <div className="stat-value">{members.length}</div>
+          </div>
+          <div className="stat-tile stat">
+            <div className="stat-label">Wydatki</div>
+            <div className="stat-value">{expenses.length}</div>
+          </div>
+          <div className="stat-tile stat">
+            <div className="stat-label">Łącznie</div>
+            <div className="stat-value warn">{totalSpent.toFixed(2)}<span className="stat-unit">zł</span></div>
+          </div>
         </div>
       </div>
 
@@ -103,11 +103,6 @@ export default function Ekipa({ members, expenses, myGear, currentUser, onAddMem
                       )}
                     </div>
                   )}
-                  <div className="member-stats">
-                    Zapłacił: <span style={{ color:"var(--amber)", fontWeight:600 }}>{paid.toFixed(2)} zł</span>
-                    {" · "}Ekwipunek: {gear.packed}/{gear.total}
-                    {hasExpenses(m.id) && <span style={{ color:"var(--amber)", marginLeft:"6px" }}>· ma wydatki</span>}
-                  </div>
                 </div>
                 {!isEd && (
                   <div className="member-actions" style={{ display: "flex", gap: "4px" }}>
@@ -116,11 +111,24 @@ export default function Ekipa({ members, expenses, myGear, currentUser, onAddMem
                       <LuPencil size={14} />
                     </button>
                     {/* Zmieniono emoji 🗑 na LuTrash2 */}
-                    <button className="btn btn-danger btn-sm" style={{ display: "flex", alignItems: "center" }} onClick={() => removeMember(m.id)} disabled={hasExpenses(m.id)}>
+                    <button className="btn btn-danger btn-sm" style={{ display: "flex", alignItems: "center" }} onClick={() => removeMember(m.id)} disabled={hasExpenses(m.id)}
+                      title={hasExpenses(m.id) ? "Ma przypisane wydatki — nie można usunąć" : "Usuń"}>
                       <LuTrash2 size={14} />
                     </button>
                   </div>
                 )}
+                <div className="stat-row">
+                  <div className="stat">
+                    <div className="stat-label">Zapłacił(a)</div>
+                    <div className="stat-value sm warn">{paid.toFixed(2)}<span className="stat-unit">zł</span></div>
+                  </div>
+                  <div className="stat">
+                    <div className="stat-label">Ekwipunek</div>
+                    <div className={`stat-value sm${gear.total > 0 && gear.packed === gear.total ? " plus" : ""}`}>
+                      {gear.total > 0 ? `${gear.packed}/${gear.total}` : "—"}
+                    </div>
+                  </div>
+                </div>
               </li>
             );
           })}
